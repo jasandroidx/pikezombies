@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Pike County Zombies",
+      "hasCanvas": true,
+      "bodyTextLen": 649,
+      "bodyTextHash": "aef407bb50073591270b0ccce9475f6dec51a856e96ce751968cd61df44e9272",
+      "bodyTextPrefix": "PIKE COUNTY, INDIANA · QUARANTINE 1983 PATOKA RIVER · YELLOW BAN",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Pike County Zombies",
+      "hasCanvas": true,
+      "bodyTextLen": 539,
+      "bodyTextHash": "a01ef568b8567ad8e417c4a4739a23b6b2ebef077f00b41bb8fba4a4e6ff4d26",
+      "bodyTextPrefix": "PIKE COUNTY, INDIANA · QUARANTINE 1983 PATOKA RIVER · YELLOW BAN",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-built.json",
+  "divergesFromBaseline": false,
+  "baselineReasons": []
+}
