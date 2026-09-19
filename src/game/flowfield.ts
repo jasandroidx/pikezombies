@@ -1,10 +1,25 @@
 /** Shared BFS flow field so the horde walks around cabins instead of into them. */
+
+// Static lookup table for normalized 8-way direction vectors to eliminate per-frame allocations in dir()
+const DIR_LOOKUP: Array<{ x: number; y: number } | null> = new Array(9);
+for (let by = -1; by <= 1; by++) {
+  for (let bx = -1; bx <= 1; bx++) {
+    if (bx === 0 && by === 0) {
+      DIR_LOOKUP[4] = null;
+    } else {
+      const m = Math.hypot(bx, by);
+      DIR_LOOKUP[(bx + 1) + (by + 1) * 3] = Object.freeze({ x: bx / m, y: by / m });
+    }
+  }
+}
+
 export class FlowField {
   cell = 40;
   cols = 0;
   rows = 0;
   dist = new Float32Array(0);
   block = new Uint8Array(0);
+  private q = new Int32Array(0);
 
   markBlocked(
     mapW: number,
@@ -14,7 +29,13 @@ export class FlowField {
     this.cols = Math.max(1, Math.ceil(mapW / this.cell));
     this.rows = Math.max(1, Math.ceil(mapH / this.cell));
     const n = this.cols * this.rows;
-    this.block = new Uint8Array(n);
+    if (this.block.length < n) {
+      this.block = new Uint8Array(n);
+      this.dist = new Float32Array(n);
+      this.q = new Int32Array(n);
+    } else {
+      this.block.fill(0);
+    }
     for (const o of obstacles) {
       const x0 = Math.max(0, Math.floor(o.x / this.cell));
       const y0 = Math.max(0, Math.floor(o.y / this.cell));
@@ -30,30 +51,57 @@ export class FlowField {
     const C = this.cols;
     const R = this.rows;
     const n = C * R;
-    this.dist = new Float32Array(n);
+    if (n === 0) return;
+    if (this.dist.length < n) {
+      this.dist = new Float32Array(n);
+      this.q = new Int32Array(n);
+    }
     this.dist.fill(1e8);
     const gx = Math.max(0, Math.min(C - 1, Math.floor(px / this.cell)));
     const gy = Math.max(0, Math.min(R - 1, Math.floor(py / this.cell)));
-    const q = new Int32Array(n);
     let head = 0;
     let tail = 0;
     const start = gy * C + gx;
     this.dist[start] = 0;
-    q[tail++] = start;
+    this.q[tail++] = start;
     while (head < tail) {
-      const i = q[head++];
+      const i = this.q[head++];
       const x = i % C;
       const y = (i / C) | 0;
       const nd = this.dist[i] + 1;
-      const nbs = [x + 1, y, x - 1, y, x, y + 1, x, y - 1];
-      for (let k = 0; k < 4; k++) {
-        const nx = nbs[k * 2];
-        const ny = nbs[k * 2 + 1];
-        if (nx < 0 || ny < 0 || nx >= C || ny >= R) continue;
-        const j = ny * C + nx;
-        if (this.block[j] || this.dist[j] <= nd) continue;
-        this.dist[j] = nd;
-        q[tail++] = j;
+
+      // Unrolled neighbor checks to prevent allocation of short-lived neighbor arrays in loop
+      // Right (x + 1, y)
+      if (x + 1 < C) {
+        const j = i + 1;
+        if (!this.block[j] && this.dist[j] > nd) {
+          this.dist[j] = nd;
+          this.q[tail++] = j;
+        }
+      }
+      // Left (x - 1, y)
+      if (x - 1 >= 0) {
+        const j = i - 1;
+        if (!this.block[j] && this.dist[j] > nd) {
+          this.dist[j] = nd;
+          this.q[tail++] = j;
+        }
+      }
+      // Down (x, y + 1)
+      if (y + 1 < R) {
+        const j = i + C;
+        if (!this.block[j] && this.dist[j] > nd) {
+          this.dist[j] = nd;
+          this.q[tail++] = j;
+        }
+      }
+      // Up (x, y - 1)
+      if (y - 1 >= 0) {
+        const j = i - C;
+        if (!this.block[j] && this.dist[j] > nd) {
+          this.dist[j] = nd;
+          this.q[tail++] = j;
+        }
       }
     }
   }
@@ -86,7 +134,6 @@ export class FlowField {
       }
     }
     if (!bx && !by) return null;
-    const m = Math.hypot(bx, by) || 1;
-    return { x: bx / m, y: by / m };
+    return DIR_LOOKUP[(bx + 1) + (by + 1) * 3];
   }
 }
