@@ -1,3 +1,7 @@
+// Static directional offsets for 4-neighbor BFS (Right, Left, Down, Up)
+const DX = [1, -1, 0, 0];
+const DY = [0, 0, 1, -1];
+
 /** Shared BFS flow field so the horde walks around cabins instead of into them. */
 export class FlowField {
   cell = 40;
@@ -5,6 +9,9 @@ export class FlowField {
   rows = 0;
   dist = new Float32Array(0);
   block = new Uint8Array(0);
+
+  // Pre-allocated reusable queue buffer to avoid GC allocations during BFS rebuilds
+  private queue = new Int32Array(0);
 
   markBlocked(
     mapW: number,
@@ -14,7 +21,11 @@ export class FlowField {
     this.cols = Math.max(1, Math.ceil(mapW / this.cell));
     this.rows = Math.max(1, Math.ceil(mapH / this.cell));
     const n = this.cols * this.rows;
-    this.block = new Uint8Array(n);
+    if (this.block.length !== n) {
+      this.block = new Uint8Array(n);
+    } else {
+      this.block.fill(0);
+    }
     for (const o of obstacles) {
       const x0 = Math.max(0, Math.floor(o.x / this.cell));
       const y0 = Math.max(0, Math.floor(o.y / this.cell));
@@ -30,25 +41,37 @@ export class FlowField {
     const C = this.cols;
     const R = this.rows;
     const n = C * R;
-    this.dist = new Float32Array(n);
+    if (n === 0) return;
+
+    // Reuse existing Float32Array and Int32Array buffers to avoid GC allocations during rebuilds
+    if (this.dist.length !== n) {
+      this.dist = new Float32Array(n);
+    }
     this.dist.fill(1e8);
+
+    if (this.queue.length !== n) {
+      this.queue = new Int32Array(n);
+    }
+    const q = this.queue;
+
     const gx = Math.max(0, Math.min(C - 1, Math.floor(px / this.cell)));
     const gy = Math.max(0, Math.min(R - 1, Math.floor(py / this.cell)));
-    const q = new Int32Array(n);
     let head = 0;
     let tail = 0;
     const start = gy * C + gx;
     this.dist[start] = 0;
     q[tail++] = start;
+
     while (head < tail) {
       const i = q[head++];
       const x = i % C;
       const y = (i / C) | 0;
       const nd = this.dist[i] + 1;
-      const nbs = [x + 1, y, x - 1, y, x, y + 1, x, y - 1];
+
+      // Direct offset traversal prevents allocating temporary neighbor arrays during BFS
       for (let k = 0; k < 4; k++) {
-        const nx = nbs[k * 2];
-        const ny = nbs[k * 2 + 1];
+        const nx = x + DX[k];
+        const ny = y + DY[k];
         if (nx < 0 || ny < 0 || nx >= C || ny >= R) continue;
         const j = ny * C + nx;
         if (this.block[j] || this.dist[j] <= nd) continue;
@@ -58,7 +81,7 @@ export class FlowField {
     }
   }
 
-  dir(x: number, y: number): { x: number; y: number } | null {
+  dir(x: number, y: number, out?: { x: number; y: number }): { x: number; y: number } | null {
     const C = this.cols;
     const R = this.rows;
     if (C < 2 || R < 2) return null;
@@ -87,6 +110,13 @@ export class FlowField {
     }
     if (!bx && !by) return null;
     const m = Math.hypot(bx, by) || 1;
-    return { x: bx / m, y: by / m };
+    const rx = bx / m;
+    const ry = by / m;
+    if (out) {
+      out.x = rx;
+      out.y = ry;
+      return out;
+    }
+    return { x: rx, y: ry };
   }
 }
