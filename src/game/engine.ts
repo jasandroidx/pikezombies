@@ -1251,13 +1251,22 @@ export class GameEngine {
 				this.killZombie(r, n);
 				continue;
 			}
-			let i = this.player.x - r.x, a = this.player.y - r.y, o = Math.hypot(i, a);
+			// Optimized distance checks in hot zombie loop using squared distances to avoid Math.hypot overhead
+			let i = this.player.x - r.x, a = this.player.y - r.y;
+			let distSq = i * i + a * a;
 			r.hitFlash > 0 && (r.hitFlash -= e);
-			let s = Math.hypot(r.hearX - r.x, r.hearY - r.y), c = this.simTime < this.bellLureUntil && this.currentLocation.bell, l = r.type === `sprinter` ? 520 : r.type === `behemoth` ? 700 : r.type === `crawler` ? 260 : 340;
+			let hearDx = r.hearX - r.x, hearDy = r.hearY - r.y;
+			let hearDistSq = hearDx * hearDx + hearDy * hearDy;
+			let c = this.simTime < this.bellLureUntil && this.currentLocation.bell, l = r.type === `sprinter` ? 520 : r.type === `behemoth` ? 700 : r.type === `crawler` ? 260 : 340;
 			this.player.isSneaking && (l *= .6);
+			let attackStateDist = r.radius + this.player.radius + 2;
+			let attackStateDistSq = attackStateDist * attackStateDist;
+			let hitDist = r.radius + this.player.radius;
+			let hitDistSq = hitDist * hitDist;
+			let lSq = l * l;
 			const lantern = this.currentLocation.lantern;
 			if (this.lanternLit && lantern && r.type === `shambler` && r.ai === `wander`) r.wanderAngle = Math.atan2(lantern.y - r.y, lantern.x - r.x) + (Math.random() - .5) * .7;
-			c && this.currentLocation.bell ? (r.hearX = this.currentLocation.bell.x, r.hearY = this.currentLocation.bell.y, r.ai = o <= r.radius + this.player.radius + 2 ? `attack` : `investigate`) : o < l ? r.ai = o <= r.radius + this.player.radius + 2 ? `attack` : `chase` : r.ai === `wander` && s > 40 && (r.hearX !== r.x || r.hearY !== r.y) && (r.ai = `investigate`), r.ai === `wander` ? (r.wanderAngle += (Math.random() - .5) * .8 * e, r.angle = r.wanderAngle) : r.ai === `investigate` ? (r.angle = Math.atan2(r.hearY - r.y, r.hearX - r.x), s < 28 && (r.ai = `wander`)) : r.angle = Math.atan2(a, i), r.type === `bloater_spitter` && (r.spitCooldown ||= 2500, r.spitCooldown -= e * 1e3, r.spitCooldown <= 0 && o < 450) && (r.spitCooldown = 3200, this.acidSpits.push({
+			c && this.currentLocation.bell ? (r.hearX = this.currentLocation.bell.x, r.hearY = this.currentLocation.bell.y, r.ai = distSq <= attackStateDistSq ? `attack` : `investigate`) : distSq < lSq ? r.ai = distSq <= attackStateDistSq ? `attack` : `chase` : r.ai === `wander` && hearDistSq > 1600 && (r.hearX !== r.x || r.hearY !== r.y) && (r.ai = `investigate`), r.ai === `wander` ? (r.wanderAngle += (Math.random() - .5) * .8 * e, r.angle = r.wanderAngle) : r.ai === `investigate` ? (r.angle = Math.atan2(r.hearY - r.y, r.hearX - r.x), hearDistSq < 784 && (r.ai = `wander`)) : r.angle = Math.atan2(a, i), r.type === `bloater_spitter` && (r.spitCooldown ||= 2500, r.spitCooldown -= e * 1e3, r.spitCooldown <= 0 && distSq < 202500) && (r.spitCooldown = 3200, this.acidSpits.push({
 				id: Math.random().toString(),
 				x: r.x,
 				y: r.y,
@@ -1290,13 +1299,16 @@ export class GameEngine {
 			this.checkObstacleCollision(m, r.y, r.radius) ? (this.smashBarricadeAt(m, r.y, r.damage * .08), this.smashHoleAt(m, r.y, r.damage * .12)) : r.x = m, this.checkObstacleCollision(r.x, h, r.radius) ? (this.smashBarricadeAt(r.x, h, r.damage * .08), this.smashHoleAt(r.x, h, r.damage * .12)) : r.y = h;
 			for (let e = 0; e < this.zombies.length; e++) {
 				if (n === e) continue;
-				let t = this.zombies[e], i = r.x - t.x, a = r.y - t.y, o = Math.hypot(i, a), s = r.radius + t.radius;
-				if (o < s && o > 0) {
+				let t = this.zombies[e], i = r.x - t.x, a = r.y - t.y;
+				let s = r.radius + t.radius;
+				let zDistSq = i * i + a * a;
+				if (zDistSq < s * s && zDistSq > 0) {
+					let o = Math.sqrt(zDistSq);
 					let e = (s - o) * .15;
 					r.x += i / o * e, r.y += a / o * e;
 				}
 			}
-			o <= r.radius + this.player.radius && this.invuln <= 0 && t - r.lastAttackTime >= r.attackCooldown && (this.lastKiller = r.type, this.damagePlayer(r.damage), r.lastAttackTime = t);
+			distSq <= hitDistSq && this.invuln <= 0 && t - r.lastAttackTime >= r.attackCooldown && (this.lastKiller = r.type, this.damagePlayer(r.damage), r.lastAttackTime = t);
 		}
 	}
 	killZombie(e, t) {
