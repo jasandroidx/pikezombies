@@ -149,7 +149,7 @@ export function HUD({
           {waveTimer > 0 && !extractActive && !bellReady && (
             <button
               type="button"
-              className="pointer-events-auto w-fit rounded border border-border bg-surface-2 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-fg"
+              className="pointer-events-auto w-fit rounded border border-border bg-surface-2 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-fg focus-visible:ring-2 focus-visible:ring-accent outline-none"
               onClick={onSkipWaveTimer}
             >
               Skip break
@@ -166,7 +166,8 @@ export function HUD({
           </div>
           <button
             type="button"
-            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg"
+            aria-label="Open workbench shop"
+            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg focus-visible:ring-2 focus-visible:ring-accent outline-none"
             onClick={onOpenWorkbench}
             title="Workbench"
           >
@@ -174,9 +175,10 @@ export function HUD({
           </button>
           <button
             type="button"
-            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg"
+            aria-label={isMuted ? "Unmute audio" : "Mute audio"}
+            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg focus-visible:ring-2 focus-visible:ring-accent outline-none"
             onClick={onToggleMute}
-            title="Mute"
+            title={isMuted ? "Unmute audio" : "Mute audio"}
           >
             {isMuted ? <VolumeX className="h-4 w-4 text-primary" /> : <Volume2 className="h-4 w-4 text-accent" />}
           </button>
@@ -260,8 +262,9 @@ export function HUD({
                   key={w.id}
                   type="button"
                   disabled={!w.unlocked}
+                  aria-label={w.unlocked ? `Switch to ${w.name}` : `${w.name} locked`}
                   onClick={() => w.unlocked && onSelectWeapon?.(i)}
-                  className={`pointer-events-auto min-w-7 rounded border px-1.5 py-0.5 font-mono text-[10px] ${
+                  className={`pointer-events-auto min-w-7 rounded border px-1.5 py-0.5 font-mono text-[10px] focus-visible:ring-2 focus-visible:ring-accent outline-none ${
                     !w.unlocked
                       ? "cursor-not-allowed border-border text-muted/40"
                       : i === weaponIndex
