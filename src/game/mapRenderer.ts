@@ -58,20 +58,26 @@ export function renderEnvironment(
     ctx.save();
     ctx.translate(decal.x, decal.y);
     ctx.rotate(decal.rotation);
-    ctx.fillStyle = `rgba(139, 0, 0, ${decal.alpha})`;
+
+    // Bolt: Use static hex fillStyle with globalAlpha to eliminate per-decal string allocation GC
+    ctx.globalAlpha = decal.alpha;
+    ctx.fillStyle = '#8b0000';
     ctx.beginPath();
     ctx.ellipse(0, 0, decal.radius, decal.radius * 0.65, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Spatter drops
-    ctx.fillStyle = `rgba(90, 0, 0, ${decal.alpha * 0.8})`;
-    for (let i = 0; i < 4; i++) {
-      const angle = (i * Math.PI) / 2 + decal.rotation;
-      const dist = decal.radius * 0.9;
-      ctx.beginPath();
-      ctx.arc(Math.cos(angle) * dist, Math.sin(angle) * dist, decal.radius * 0.2, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    // Bolt: Batch 4 spatter drops in local rotated space, removing double-rotation trig calls & multi-fill passes
+    ctx.globalAlpha = decal.alpha * 0.8;
+    ctx.fillStyle = '#5a0000';
+    const dist = decal.radius * 0.9;
+    const dropR = decal.radius * 0.2;
+    ctx.beginPath();
+    ctx.arc(dist, 0, dropR, 0, Math.PI * 2);
+    ctx.arc(0, dist, dropR, 0, Math.PI * 2);
+    ctx.arc(-dist, 0, dropR, 0, Math.PI * 2);
+    ctx.arc(0, -dist, dropR, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.restore();
   }
 
