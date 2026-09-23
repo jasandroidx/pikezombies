@@ -166,7 +166,8 @@ export function HUD({
           </div>
           <button
             type="button"
-            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg"
+            aria-label="Open workbench"
+            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             onClick={onOpenWorkbench}
             title="Workbench"
           >
@@ -174,9 +175,10 @@ export function HUD({
           </button>
           <button
             type="button"
-            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg"
+            aria-label={isMuted ? "Unmute audio" : "Mute audio"}
+            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             onClick={onToggleMute}
-            title="Mute"
+            title={isMuted ? "Unmute audio" : "Mute audio"}
           >
             {isMuted ? <VolumeX className="h-4 w-4 text-primary" /> : <Volume2 className="h-4 w-4 text-accent" />}
           </button>
