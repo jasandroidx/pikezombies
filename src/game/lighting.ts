@@ -11,11 +11,27 @@ interface LightSource {
 export class DynamicLighting {
   private darknessCanvas: HTMLCanvasElement;
   private darknessCtx: CanvasRenderingContext2D;
+  private fogCanvas: HTMLCanvasElement;
   private fogParticles: { x: number; y: number; vx: number; vy: number; radius: number; alpha: number }[] = [];
 
   constructor() {
     this.darknessCanvas = document.createElement('canvas');
     this.darknessCtx = this.darknessCanvas.getContext('2d')!;
+
+    // Bolt: Pre-render soft fog radial gradient sprite once on an offscreen canvas
+    // to eliminate 40 per-frame CanvasGradient allocations and string parsing calls.
+    this.fogCanvas = document.createElement('canvas');
+    this.fogCanvas.width = 128;
+    this.fogCanvas.height = 128;
+    const fCtx = this.fogCanvas.getContext('2d')!;
+    const fogGrad = fCtx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    fogGrad.addColorStop(0, 'rgba(168, 176, 142, 1.0)');
+    fogGrad.addColorStop(0.6, 'rgba(120, 132, 108, 0.52)');
+    fogGrad.addColorStop(1, 'rgba(90, 100, 80, 0)');
+    fCtx.fillStyle = fogGrad;
+    fCtx.beginPath();
+    fCtx.arc(64, 64, 64, 0, Math.PI * 2);
+    fCtx.fill();
 
     // Drifting Patoka fog
     for (let i = 0; i < 40; i++) {
@@ -153,15 +169,10 @@ export class DynamicLighting {
       if (p.x > width + p.radius) p.x = -p.radius;
       if (p.y > height + p.radius) p.y = -p.radius;
 
-      const fogGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-      fogGrad.addColorStop(0, `rgba(168, 176, 142, ${p.alpha * 1.35})`);
-      fogGrad.addColorStop(0.6, `rgba(120, 132, 108, ${p.alpha * 0.7})`);
-      fogGrad.addColorStop(1, "rgba(90, 100, 80, 0)");
-
-      ctx.fillStyle = fogGrad;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fill();
+      // Bolt: Blit pre-rendered fog particle texture with clamped globalAlpha
+      // to avoid per-frame gradient allocation and string parsing overhead
+      ctx.globalAlpha = Math.min(1, p.alpha * 1.35);
+      ctx.drawImage(this.fogCanvas, p.x - p.radius, p.y - p.radius, p.radius * 2, p.radius * 2);
     }
     ctx.restore();
   }
