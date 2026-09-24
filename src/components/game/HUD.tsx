@@ -1,5 +1,5 @@
 import { Weapon, ActivePowerup } from "@/types/game";
-import { Volume2, VolumeX, Flame, Wrench, Zap, Skull, Infinity, Radio, Lamp, Bell } from "lucide-react";
+import { Volume2, VolumeX, Flame, Wrench, Zap, Skull, Infinity as InfinityIcon, Radio, Lamp, Bell } from "lucide-react";
 
 interface HUDProps {
   health: number;
@@ -166,17 +166,19 @@ export function HUD({
           </div>
           <button
             type="button"
-            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg"
+            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             onClick={onOpenWorkbench}
-            title="Workbench"
+            aria-label="Open workbench (Tab)"
+            title="Workbench (Tab)"
           >
             <Wrench className="h-4 w-4 text-accent" />
           </button>
           <button
             type="button"
-            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg"
+            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             onClick={onToggleMute}
-            title="Mute"
+            aria-label={isMuted ? "Unmute audio (M)" : "Mute audio (M)"}
+            title={isMuted ? "Unmute (M)" : "Mute (M)"}
           >
             {isMuted ? <VolumeX className="h-4 w-4 text-primary" /> : <Volume2 className="h-4 w-4 text-accent" />}
           </button>
@@ -201,7 +203,7 @@ export function HUD({
               className="flex items-center gap-1 rounded border border-accent/50 bg-surface px-2 py-1 font-mono text-[10px] uppercase text-accent"
             >
               {p.type === "nuke" && <Skull className="h-3 w-3" />}
-              {p.type === "infinite_ammo" && <Infinity className="h-3 w-3" />}
+              {p.type === "infinite_ammo" && <InfinityIcon className="h-3 w-3" />}
               {p.type === "insta_kill" && <Zap className="h-3 w-3" />}
               {p.type.replace("_", " ")} {Math.ceil(p.durationRemaining / 1000)}s
             </div>
