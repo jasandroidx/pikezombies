@@ -34,13 +34,31 @@ export function StartScreen({ onStartGame, isMuted, onToggleMute }: StartScreenP
               Record {save.highScore.toLocaleString()} · Wave {save.bestWave}
             </div>
           )}
-          <button type="button" className="rounded border border-border bg-surface p-2" onClick={() => setShowJournal((v) => !v)}>
+          <button
+            type="button"
+            className="rounded border border-border bg-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            onClick={() => setShowJournal((v) => !v)}
+            aria-label={showJournal ? "Hide county journal" : "Show county journal"}
+            title={showJournal ? "Hide journal" : "Show journal"}
+          >
             <BookOpen className="h-4 w-4 text-accent" />
           </button>
-          <button type="button" className="rounded border border-border bg-surface p-2" onClick={() => setShowHelp((v) => !v)}>
+          <button
+            type="button"
+            className="rounded border border-border bg-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            onClick={() => setShowHelp((v) => !v)}
+            aria-label={showHelp ? "Hide controls help" : "Show controls help"}
+            title={showHelp ? "Hide help" : "Show help"}
+          >
             <HelpCircle className="h-4 w-4 text-fg" />
           </button>
-          <button type="button" className="rounded border border-border bg-surface p-2" onClick={onToggleMute}>
+          <button
+            type="button"
+            className="rounded border border-border bg-surface p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            onClick={onToggleMute}
+            aria-label={isMuted ? "Unmute audio" : "Mute audio"}
+            title={isMuted ? "Unmute" : "Mute"}
+          >
             {isMuted ? <VolumeX className="h-4 w-4 text-primary" /> : <Volume2 className="h-4 w-4 text-accent" />}
           </button>
         </div>
