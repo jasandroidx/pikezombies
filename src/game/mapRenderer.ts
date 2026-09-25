@@ -23,20 +23,19 @@ export function renderEnvironment(
   const endX = viewport.x + viewport.width;
   const endY = viewport.y + viewport.height;
 
+  // Batched grid path rendering to minimize draw calls
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
   ctx.lineWidth = 1;
+  ctx.beginPath();
   for (let x = startX; x <= endX; x += tileSize) {
-    ctx.beginPath();
     ctx.moveTo(x, viewport.y);
     ctx.lineTo(x, viewport.y + viewport.height);
-    ctx.stroke();
   }
   for (let y = startY; y <= endY; y += tileSize) {
-    ctx.beginPath();
     ctx.moveTo(viewport.x, y);
     ctx.lineTo(viewport.x + viewport.width, y);
-    ctx.stroke();
   }
+  ctx.stroke();
 
   // Draw natural dirt patches and trails
   ctx.fillStyle = location.trail || '#26211a';

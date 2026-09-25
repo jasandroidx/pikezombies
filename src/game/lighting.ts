@@ -11,11 +11,28 @@ interface LightSource {
 export class DynamicLighting {
   private darknessCanvas: HTMLCanvasElement;
   private darknessCtx: CanvasRenderingContext2D;
+  private fogCanvas: HTMLCanvasElement;
   private fogParticles: { x: number; y: number; vx: number; vy: number; radius: number; alpha: number }[] = [];
 
   constructor() {
     this.darknessCanvas = document.createElement('canvas');
     this.darknessCtx = this.darknessCanvas.getContext('2d')!;
+
+    // Pre-render normalized fog sprite to eliminate 2,400 radial gradient creations per second at 60 FPS
+    this.fogCanvas = document.createElement('canvas');
+    const fogSize = 256;
+    this.fogCanvas.width = fogSize;
+    this.fogCanvas.height = fogSize;
+    const fCtx = this.fogCanvas.getContext('2d')!;
+    const half = fogSize / 2;
+    const fogGrad = fCtx.createRadialGradient(half, half, 0, half, half, half);
+    fogGrad.addColorStop(0, 'rgba(168, 176, 142, 1.0)');
+    fogGrad.addColorStop(0.6, 'rgba(120, 132, 108, 0.5185)');
+    fogGrad.addColorStop(1, 'rgba(90, 100, 80, 0)');
+    fCtx.fillStyle = fogGrad;
+    fCtx.beginPath();
+    fCtx.arc(half, half, half, 0, Math.PI * 2);
+    fCtx.fill();
 
     // Drifting Patoka fog
     for (let i = 0; i < 40; i++) {
@@ -153,15 +170,10 @@ export class DynamicLighting {
       if (p.x > width + p.radius) p.x = -p.radius;
       if (p.y > height + p.radius) p.y = -p.radius;
 
-      const fogGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-      fogGrad.addColorStop(0, `rgba(168, 176, 142, ${p.alpha * 1.35})`);
-      fogGrad.addColorStop(0.6, `rgba(120, 132, 108, ${p.alpha * 0.7})`);
-      fogGrad.addColorStop(1, "rgba(90, 100, 80, 0)");
-
-      ctx.fillStyle = fogGrad;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fill();
+      // Draw fast pre-rendered offscreen fog texture scaled by p.alpha
+      ctx.globalAlpha = p.alpha * 1.35;
+      const diameter = p.radius * 2;
+      ctx.drawImage(this.fogCanvas, p.x - p.radius, p.y - p.radius, diameter, diameter);
     }
     ctx.restore();
   }
