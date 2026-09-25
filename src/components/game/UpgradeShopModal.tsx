@@ -79,7 +79,13 @@ export function UpgradeShopModal({
               <span className="font-mono text-[10px] uppercase text-muted">Scrap </span>
               <span className="font-heading text-lg font-bold text-accent">{scrap}</span>
             </div>
-            <button id="shop-close-btn" type="button" onClick={onClose} className="rounded border border-border bg-surface p-2 text-muted hover:text-fg">
+            <button
+              id="shop-close-btn"
+              type="button"
+              aria-label="Close workbench shop"
+              onClick={onClose}
+              className="rounded border border-border bg-surface p-2 text-muted hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
               <X className="h-5 w-5" />
             </button>
           </div>
