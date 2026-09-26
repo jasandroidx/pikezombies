@@ -1,6 +1,17 @@
 import { useState } from "react";
 import { Weapon, Perk } from "@/types/game";
-import { Wrench, Shield, Zap, Sun, Package, Flame, Target, X, Check, ShoppingCart } from "lucide-react";
+import {
+  Wrench,
+  Shield,
+  Zap,
+  Sun,
+  Package,
+  Flame,
+  Target,
+  X,
+  Check,
+  ShoppingCart,
+} from "lucide-react";
 import { soundEngine } from "@/audio/soundEngine";
 
 interface UpgradeShopModalProps {
@@ -70,8 +81,12 @@ export function UpgradeShopModal({
               <Wrench className="h-6 w-6 text-accent" />
             </div>
             <div>
-              <h2 className="font-heading text-xl font-bold tracking-wider text-fg md:text-2xl">HARGROVE SHED</h2>
-              <p className="font-mono text-[11px] uppercase tracking-widest text-muted">Workbench · reload, file, distill</p>
+              <h2 className="font-heading text-xl font-bold tracking-wider text-fg md:text-2xl">
+                HARGROVE SHED
+              </h2>
+              <p className="font-mono text-[11px] uppercase tracking-widest text-muted">
+                Workbench · reload, file, distill
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -79,7 +94,14 @@ export function UpgradeShopModal({
               <span className="font-mono text-[10px] uppercase text-muted">Scrap </span>
               <span className="font-heading text-lg font-bold text-accent">{scrap}</span>
             </div>
-            <button id="shop-close-btn" type="button" onClick={onClose} className="rounded border border-border bg-surface p-2 text-muted hover:text-fg">
+            <button
+              id="shop-close-btn"
+              type="button"
+              aria-label="Close workbench"
+              title="Close workbench"
+              onClick={onClose}
+              className="rounded border border-border bg-surface p-2 text-muted hover:text-fg focus-visible:ring-2 focus-visible:ring-accent outline-none"
+            >
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -93,7 +115,9 @@ export function UpgradeShopModal({
               type="button"
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-3 font-heading text-sm font-bold uppercase tracking-wider ${
-                activeTab === tab.id ? "border-b-2 border-accent text-accent" : "text-muted hover:text-fg"
+                activeTab === tab.id
+                  ? "border-b-2 border-accent text-accent"
+                  : "text-muted hover:text-fg"
               }`}
             >
               {tab.label}
@@ -109,22 +133,35 @@ export function UpgradeShopModal({
                 const canAffordUpgrade = scrap >= upgradeCost;
                 const canAffordUnlock = scrap >= wep.cost;
                 return (
-                  <div key={wep.id} className={`flex flex-col justify-between rounded border bg-bg p-4 ${equippedId === wep.id ? "border-accent" : "border-border"}`}>
+                  <div
+                    key={wep.id}
+                    className={`flex flex-col justify-between rounded border bg-bg p-4 ${equippedId === wep.id ? "border-accent" : "border-border"}`}
+                  >
                     <div>
                       <div className="mb-1 flex items-start justify-between">
                         <div>
-                          <span className="font-mono text-[10px] uppercase tracking-wider text-accent">{wep.category}</span>
+                          <span className="font-mono text-[10px] uppercase tracking-wider text-accent">
+                            {wep.category}
+                          </span>
                           <h3 className="font-heading text-lg font-bold text-fg">{wep.name}</h3>
                         </div>
                         {equippedId === wep.id ? (
-                          <span className="rounded border border-accent bg-accent px-2 py-0.5 font-mono text-[10px] text-bg">In hands</span>
+                          <span className="rounded border border-accent bg-accent px-2 py-0.5 font-mono text-[10px] text-bg">
+                            In hands
+                          </span>
                         ) : wep.unlocked ? (
-                          <span className="rounded border border-accent/40 px-2 py-0.5 font-mono text-[10px] text-accent">Lv. {wep.upgradeLevel}</span>
+                          <span className="rounded border border-accent/40 px-2 py-0.5 font-mono text-[10px] text-accent">
+                            Lv. {wep.upgradeLevel}
+                          </span>
                         ) : (
-                          <span className="rounded border border-primary/40 px-2 py-0.5 font-mono text-[10px] text-primary">Locked</span>
+                          <span className="rounded border border-primary/40 px-2 py-0.5 font-mono text-[10px] text-primary">
+                            Locked
+                          </span>
                         )}
                       </div>
-                      <p className="mb-3 font-lore text-xs leading-relaxed text-muted">{wep.description}</p>
+                      <p className="mb-3 font-lore text-xs leading-relaxed text-muted">
+                        {wep.description}
+                      </p>
                       <div className="mb-3 grid grid-cols-3 gap-2 rounded border border-border bg-surface p-2.5 text-center">
                         <Stat n="Damage" v={Math.round(wep.damage)} />
                         <Stat n="Mag" v={wep.magazineSize} />
@@ -157,7 +194,9 @@ export function UpgradeShopModal({
                           }}
                           disabled={!canAffordUpgrade}
                           className={`flex w-full items-center justify-center gap-2 rounded border px-3 py-2 font-heading text-xs font-bold uppercase tracking-wider ${
-                            canAffordUpgrade ? "border-accent bg-accent text-bg" : "cursor-not-allowed border-border bg-surface-2 text-muted"
+                            canAffordUpgrade
+                              ? "border-accent bg-accent text-bg"
+                              : "cursor-not-allowed border-border bg-surface-2 text-muted"
                           }`}
                         >
                           <Wrench className="h-4 w-4" />
@@ -176,7 +215,9 @@ export function UpgradeShopModal({
                         }}
                         disabled={!canAffordUnlock}
                         className={`flex w-full items-center justify-center gap-2 rounded border px-3 py-2 font-heading text-xs font-bold uppercase tracking-wider ${
-                          canAffordUnlock ? "border-primary bg-primary text-fg" : "cursor-not-allowed border-border bg-surface-2 text-muted"
+                          canAffordUnlock
+                            ? "border-primary bg-primary text-fg"
+                            : "cursor-not-allowed border-border bg-surface-2 text-muted"
                         }`}
                       >
                         <ShoppingCart className="h-4 w-4" />
@@ -196,9 +237,14 @@ export function UpgradeShopModal({
                 const cost = perk.cost * (perk.level + 1);
                 const canAfford = scrap >= cost && !isMax;
                 return (
-                  <div key={perk.id} className="flex flex-col justify-between rounded border border-border bg-bg p-4">
+                  <div
+                    key={perk.id}
+                    className="flex flex-col justify-between rounded border border-border bg-bg p-4"
+                  >
                     <div className="mb-3 flex items-start gap-3">
-                      <div className="rounded border border-border bg-surface p-2.5">{getPerkIcon(perk.icon)}</div>
+                      <div className="rounded border border-border bg-surface p-2.5">
+                        {getPerkIcon(perk.icon)}
+                      </div>
                       <div className="flex-1">
                         <div className="mb-1 flex items-center justify-between">
                           <h3 className="font-heading text-base font-bold text-fg">{perk.name}</h3>
@@ -250,7 +296,9 @@ export function UpgradeShopModal({
                   </div>
                   <div>
                     <h3 className="font-heading text-base font-bold text-fg">Munitions cache</h3>
-                    <p className="font-lore text-xs text-muted">Full resupply for every gun you already own.</p>
+                    <p className="font-lore text-xs text-muted">
+                      Full resupply for every gun you already own.
+                    </p>
                   </div>
                 </div>
                 <button
@@ -264,7 +312,9 @@ export function UpgradeShopModal({
                   }}
                   disabled={scrap < 80}
                   className={`mt-4 flex w-full items-center justify-center gap-2 rounded border px-3 py-2 font-heading text-xs font-bold uppercase tracking-wider ${
-                    scrap >= 80 ? "border-accent bg-accent text-bg" : "cursor-not-allowed border-border bg-surface-2 text-muted"
+                    scrap >= 80
+                      ? "border-accent bg-accent text-bg"
+                      : "cursor-not-allowed border-border bg-surface-2 text-muted"
                   }`}
                 >
                   <ShoppingCart className="h-4 w-4" />
@@ -277,7 +327,9 @@ export function UpgradeShopModal({
                     <Flame className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-heading text-base font-bold text-fg">Winslow mash bottle</h3>
+                    <h3 className="font-heading text-base font-bold text-fg">
+                      Winslow mash bottle
+                    </h3>
                     <p className="font-lore text-xs text-muted">
                       190-proof and a rag. ({molotovs}/{maxMolotovs} carried)
                     </p>
@@ -308,7 +360,9 @@ export function UpgradeShopModal({
         </div>
 
         <div className="flex items-center justify-between border-t border-border bg-bg p-4">
-          <span className="font-mono text-[11px] uppercase tracking-widest text-muted">Tab or Esc to close</span>
+          <span className="font-mono text-[11px] uppercase tracking-widest text-muted">
+            Tab or Esc to close
+          </span>
           <button
             id="shop-resume-battle-btn"
             type="button"

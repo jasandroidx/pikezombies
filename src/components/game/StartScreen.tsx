@@ -1,7 +1,17 @@
 import { useState } from "react";
 import { GAME_LOCATIONS, OUTBREAK_ORDER } from "@/game/constants";
 import { loadSave } from "@/game/save";
-import { Play, Volume2, VolumeX, HelpCircle, BookOpen, Skull, Bell, Zap, Shield } from "lucide-react";
+import {
+  Play,
+  Volume2,
+  VolumeX,
+  HelpCircle,
+  BookOpen,
+  Skull,
+  Bell,
+  Zap,
+  Shield,
+} from "lucide-react";
 
 interface StartScreenProps {
   onStartGame: (locationIndex: number, difficulty: number, mode: "survival" | "outbreak") => void;
@@ -34,39 +44,76 @@ export function StartScreen({ onStartGame, isMuted, onToggleMute }: StartScreenP
               Record {save.highScore.toLocaleString()} · Wave {save.bestWave}
             </div>
           )}
-          <button type="button" className="rounded border border-border bg-surface p-2" onClick={() => setShowJournal((v) => !v)}>
+          <button
+            type="button"
+            aria-label="Toggle county journal"
+            className="rounded border border-border bg-surface p-2 text-fg hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-accent outline-none"
+            onClick={() => setShowJournal((v) => !v)}
+            title="County journal"
+          >
             <BookOpen className="h-4 w-4 text-accent" />
           </button>
-          <button type="button" className="rounded border border-border bg-surface p-2" onClick={() => setShowHelp((v) => !v)}>
+          <button
+            type="button"
+            aria-label="Toggle help and controls"
+            className="rounded border border-border bg-surface p-2 text-fg hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-accent outline-none"
+            onClick={() => setShowHelp((v) => !v)}
+            title="Help & controls"
+          >
             <HelpCircle className="h-4 w-4 text-fg" />
           </button>
-          <button type="button" className="rounded border border-border bg-surface p-2" onClick={onToggleMute}>
-            {isMuted ? <VolumeX className="h-4 w-4 text-primary" /> : <Volume2 className="h-4 w-4 text-accent" />}
+          <button
+            type="button"
+            aria-label={isMuted ? "Unmute audio" : "Mute audio"}
+            className="rounded border border-border bg-surface p-2 text-fg hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-accent outline-none"
+            onClick={onToggleMute}
+            title={isMuted ? "Unmute" : "Mute"}
+          >
+            {isMuted ? (
+              <VolumeX className="h-4 w-4 text-primary" />
+            ) : (
+              <Volume2 className="h-4 w-4 text-accent" />
+            )}
           </button>
         </div>
       </div>
 
       <div className="relative z-10 mx-auto my-4 w-full max-w-5xl text-center md:my-6">
-        <p className="font-mono text-xs uppercase tracking-[0.35em] text-accent">Patoka River · Yellow Banks Trace</p>
-        <h1 className="mt-2 font-display text-4xl font-bold tracking-[0.12em] text-fg md:text-6xl">PIKE COUNTY</h1>
-        <div className="wild-title mx-auto mt-1 mb-3 w-fit font-drip text-4xl md:text-7xl">Zombies</div>
+        <p className="font-mono text-xs uppercase tracking-[0.35em] text-accent">
+          Patoka River · Yellow Banks Trace
+        </p>
+        <h1 className="mt-2 font-display text-4xl font-bold tracking-[0.12em] text-fg md:text-6xl">
+          PIKE COUNTY
+        </h1>
+        <div className="wild-title mx-auto mt-1 mb-3 w-fit font-drip text-4xl md:text-7xl">
+          Zombies
+        </div>
         <p className="mx-auto mt-3 hidden max-w-xl font-lore text-sm leading-relaxed text-muted md:block">
-          The mines exhaled. The springs went to iron. Fog on the Patoka, and the dead walking the traces Lincoln used.
+          The mines exhaled. The springs went to iron. Fog on the Patoka, and the dead walking the
+          traces Lincoln used.
         </p>
       </div>
 
       <div className="relative z-10 mx-auto grid w-full max-w-6xl gap-6 md:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded border border-border bg-surface/90 p-4">
-          <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.22em] text-accent">County map</div>
-          <CountyMap selected={GAME_LOCATIONS[selectedLocation]?.id} cleared={save.mapsCleared} onPick={(id) => {
-            const i = GAME_LOCATIONS.findIndex((l) => l.id === id);
-            if (i >= 0) setSelectedLocation(i);
-          }} />
+          <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.22em] text-accent">
+            County map
+          </div>
+          <CountyMap
+            selected={GAME_LOCATIONS[selectedLocation]?.id}
+            cleared={save.mapsCleared}
+            onPick={(id) => {
+              const i = GAME_LOCATIONS.findIndex((l) => l.id === id);
+              if (i >= 0) setSelectedLocation(i);
+            }}
+          />
         </div>
 
         <div className="flex flex-col gap-3">
           <div className="rounded border border-border bg-surface/90 p-4 text-left">
-            <div className="font-heading text-xl text-fg">{GAME_LOCATIONS[selectedLocation].name}</div>
+            <div className="font-heading text-xl text-fg">
+              {GAME_LOCATIONS[selectedLocation].name}
+            </div>
             <div className="font-mono text-[11px] uppercase tracking-widest text-accent">
               {GAME_LOCATIONS[selectedLocation].township}
             </div>
@@ -86,7 +133,9 @@ export function StartScreen({ onStartGame, isMuted, onToggleMute }: StartScreenP
                 type="button"
                 onClick={() => setDifficulty(d.n)}
                 className={`flex-1 rounded border px-2 py-2 font-mono text-[11px] uppercase tracking-widest ${
-                  difficulty === d.n ? "border-accent bg-surface-2 text-accent" : "border-border bg-surface text-muted"
+                  difficulty === d.n
+                    ? "border-accent bg-surface-2 text-accent"
+                    : "border-border bg-surface text-muted"
                 }`}
               >
                 {d.label}
@@ -113,7 +162,9 @@ export function StartScreen({ onStartGame, isMuted, onToggleMute }: StartScreenP
             Survival · this place
           </button>
           {save.outbreakBeaten && (
-            <p className="font-mono text-[11px] text-accent">Dawn has already come once. Hold it again.</p>
+            <p className="font-mono text-[11px] text-accent">
+              Dawn has already come once. Hold it again.
+            </p>
           )}
 
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
@@ -123,7 +174,10 @@ export function StartScreen({ onStartGame, isMuted, onToggleMute }: StartScreenP
               { icon: Skull, title: "Blood rush", body: "Four kills. They go slow." },
               { icon: Bell, title: "Last stand", body: "Die once. Get back up." },
             ].map((item) => (
-              <div key={item.title} className="rounded border border-border bg-surface px-2 py-2 text-left">
+              <div
+                key={item.title}
+                className="rounded border border-border bg-surface px-2 py-2 text-left"
+              >
                 <div className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest text-accent">
                   <item.icon className="h-3 w-3" />
                   {item.title}
@@ -137,8 +191,11 @@ export function StartScreen({ onStartGame, isMuted, onToggleMute }: StartScreenP
 
       {showHelp && (
         <div className="relative z-20 mx-auto mt-4 max-w-xl rounded border border-border bg-surface p-4 font-mono text-xs leading-relaxed text-muted">
-          WASD move · mouse aim and fire · 1 magnum · 2 pump · 3–6 bought guns · mousewheel swap · Space roll · F bash · Q mash · R reload · Ctrl quiet step · E lantern, boards, notes, shed, truck, bell · Tab workbench · M mute.
-          Outbreak: White Oak Springs → McCord's Ford → Stendal Backbone → Petersburg Square → Winslow Still-yard. You start with the .357. The 12-gauge is already in the truck — press 2. Unlock the rest at the shed.
+          WASD move · mouse aim and fire · 1 magnum · 2 pump · 3–6 bought guns · mousewheel swap ·
+          Space roll · F bash · Q mash · R reload · Ctrl quiet step · E lantern, boards, notes,
+          shed, truck, bell · Tab workbench · M mute. Outbreak: White Oak Springs → McCord's Ford →
+          Stendal Backbone → Petersburg Square → Winslow Still-yard. You start with the .357. The
+          12-gauge is already in the truck — press 2. Unlock the rest at the shed.
         </div>
       )}
 
@@ -146,7 +203,9 @@ export function StartScreen({ onStartGame, isMuted, onToggleMute }: StartScreenP
         <div className="relative z-20 mx-auto mt-4 max-w-xl rounded border border-border bg-surface p-4">
           <div className="font-heading text-lg text-fg">County journal</div>
           {save.journal.length === 0 ? (
-            <p className="mt-2 font-lore text-sm text-muted">No notes recovered. Walk the traces.</p>
+            <p className="mt-2 font-lore text-sm text-muted">
+              No notes recovered. Walk the traces.
+            </p>
           ) : (
             <ul className="mt-2 space-y-1 font-mono text-xs text-accent">
               {save.journal.map((id) => (
@@ -179,7 +238,12 @@ function CountyMap({
   return (
     <svg viewBox="0 0 100 100" className="h-44 w-full md:h-80">
       <rect width="100" height="100" fill="#0c0b09" />
-      <path d="M8 40 C 22 48, 40 55, 70 58 C 82 60, 90 72, 94 88" fill="none" stroke="#3a3228" strokeWidth="2" />
+      <path
+        d="M8 40 C 22 48, 40 55, 70 58 C 82 60, 90 72, 94 88"
+        fill="none"
+        stroke="#3a3228"
+        strokeWidth="2"
+      />
       <text x="70" y="54" fill="#8a8175" fontSize="3.2" fontFamily="IBM Plex Mono">
         Patoka
       </text>

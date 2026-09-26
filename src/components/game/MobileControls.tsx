@@ -1,5 +1,14 @@
 import { useRef, useState, useEffect } from "react";
-import { RotateCcw, Flame, ChevronLeft, ChevronRight, FileText, Footprints, ChevronsRight, Hammer } from "lucide-react";
+import {
+  RotateCcw,
+  Flame,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Footprints,
+  ChevronsRight,
+  Hammer,
+} from "lucide-react";
 
 interface MobileControlsProps {
   onMoveChange: (vec: { x: number; y: number }) => void;
@@ -90,7 +99,12 @@ export function MobileControls({
       </div>
 
       <div className="pointer-events-auto mb-2 flex items-center gap-2.5">
-        <button type="button" onClick={onPrevWeapon} className="rounded-full border border-border bg-surface/80 p-3 text-fg" title="Previous Weapon">
+        <button
+          type="button"
+          onClick={onPrevWeapon}
+          className="rounded-full border border-border bg-surface/80 p-3 text-fg"
+          title="Previous Weapon"
+        >
           <ChevronLeft className="h-5 w-5" />
         </button>
         {onSneakToggle && (
@@ -108,12 +122,22 @@ export function MobileControls({
           </button>
         )}
         {onDodge && (
-          <button type="button" onClick={onDodge} className="rounded-full border border-accent bg-surface-2 p-3.5 text-accent" title="Roll">
+          <button
+            type="button"
+            onClick={onDodge}
+            className="rounded-full border border-accent bg-surface-2 p-3.5 text-accent"
+            title="Roll"
+          >
             <ChevronsRight className="h-5 w-5" />
           </button>
         )}
         {onBash && (
-          <button type="button" onClick={onBash} className="rounded-full border border-border bg-surface/80 p-3.5 text-fg" title="Bash">
+          <button
+            type="button"
+            onClick={onBash}
+            className="rounded-full border border-border bg-surface/80 p-3.5 text-fg"
+            title="Bash"
+          >
             <Hammer className="h-5 w-5" />
           </button>
         )}
@@ -131,13 +155,28 @@ export function MobileControls({
             <FileText className="h-5 w-5" />
           </button>
         )}
-        <button type="button" onClick={onThrowMolotov} className="rounded-full border border-primary bg-surface-2 p-3.5 text-primary" title="Throw Molotov">
+        <button
+          type="button"
+          onClick={onThrowMolotov}
+          className="rounded-full border border-primary bg-surface-2 p-3.5 text-primary"
+          title="Throw Molotov"
+        >
           <Flame className="h-6 w-6" />
         </button>
-        <button type="button" onClick={onReload} className="rounded-full border border-border bg-surface/80 p-3.5 text-fg" title="Reload">
+        <button
+          type="button"
+          onClick={onReload}
+          className="rounded-full border border-border bg-surface/80 p-3.5 text-fg"
+          title="Reload"
+        >
           <RotateCcw className="h-5 w-5" />
         </button>
-        <button type="button" onClick={onNextWeapon} className="rounded-full border border-border bg-surface/80 p-3 text-fg" title="Next Weapon">
+        <button
+          type="button"
+          onClick={onNextWeapon}
+          className="rounded-full border border-border bg-surface/80 p-3 text-fg"
+          title="Next Weapon"
+        >
           <ChevronRight className="h-5 w-5" />
         </button>
       </div>
@@ -153,7 +192,9 @@ export function MobileControls({
           className="h-12 w-12 rounded-full border border-primary bg-primary/80"
           style={{ transform: `translate(${aimPos.x}px, ${aimPos.y}px)` }}
         />
-        <span className="absolute bottom-2 font-mono text-[9px] uppercase text-primary">Aim / Fire</span>
+        <span className="absolute bottom-2 font-mono text-[9px] uppercase text-primary">
+          Aim / Fire
+        </span>
       </div>
     </div>
   );
