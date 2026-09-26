@@ -46,7 +46,13 @@ export function GameOverModal({
 
   const save = loadSave();
   const isRecord = score >= save.highScore;
-  const line = useMemo(() => (won ? "The bell rang at dawn. Pike County still has a name." : deathLine(locationName, killer)), [won, locationName, killer]);
+  const line = useMemo(
+    () =>
+      won
+        ? "The bell rang at dawn. Pike County still has a name."
+        : deathLine(locationName, killer),
+    [won, locationName, killer],
+  );
   const accuracy = stats.shotsFired > 0 ? Math.round((stats.shotsHit / stats.shotsFired) * 100) : 0;
   const minutes = Math.floor(stats.survivalTime / 60);
   const seconds = stats.survivalTime % 60;
@@ -68,17 +74,19 @@ export function GameOverModal({
           <div className="mb-3 inline-flex rounded-full border border-primary/60 bg-danger/40 p-3">
             <Skull className="h-10 w-10 text-primary" />
           </div>
-          <h2 className="font-drip wild-title text-4xl md:text-6xl">
-            {won ? "HELD" : "OVERRUN"}
-          </h2>
+          <h2 className="font-drip wild-title text-4xl md:text-6xl">{won ? "HELD" : "OVERRUN"}</h2>
           <p className="mt-1 font-heading uppercase tracking-widest text-accent">{title}</p>
           <p className="mt-3 font-lore text-sm leading-relaxed text-muted">{line}</p>
         </div>
 
         <div className="border-b border-border bg-bg p-6 text-center">
-          <div className="font-mono text-[10px] uppercase tracking-widest text-muted">Final score</div>
+          <div className="font-mono text-[10px] uppercase tracking-widest text-muted">
+            Final score
+          </div>
           <div className="font-heading text-5xl font-bold text-fg">{score.toLocaleString()}</div>
-          {isRecord && <div className="mt-1 font-mono text-xs uppercase text-accent">County record</div>}
+          {isRecord && (
+            <div className="mt-1 font-mono text-xs uppercase text-accent">County record</div>
+          )}
           <div className="mt-1 font-mono text-xs text-muted">
             {locationName} · Wave {wave} · {mode}
           </div>

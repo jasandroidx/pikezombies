@@ -1,5 +1,16 @@
 import { Weapon, ActivePowerup } from "@/types/game";
-import { Volume2, VolumeX, Flame, Wrench, Zap, Skull, Infinity, Radio, Lamp, Bell } from "lucide-react";
+import {
+  Volume2,
+  VolumeX,
+  Flame,
+  Wrench,
+  Zap,
+  Skull,
+  Infinity as InfinityIcon,
+  Radio,
+  Lamp,
+  Bell,
+} from "lucide-react";
 
 interface HUDProps {
   health: number;
@@ -100,7 +111,9 @@ export function HUD({
       <div className="flex w-full items-start justify-between gap-3">
         <div className="flex flex-col gap-1.5">
           <div className="rounded border border-border bg-surface/90 px-3 py-2 shadow-2xl backdrop-blur-md">
-            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-accent">{township}</div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-accent">
+              {township}
+            </div>
             <div className="flex items-baseline gap-2">
               <span className="font-heading text-2xl font-bold tracking-wider text-fg md:text-3xl">
                 WAVE {wave || 1}
@@ -124,25 +137,38 @@ export function HUD({
             </div>
             {bellReady && (
               <div className="mt-1 h-1 overflow-hidden rounded bg-surface-2">
-                <div className="h-full bg-accent" style={{ width: `${Math.min(100, bellHold * 100)}%` }} />
+                <div
+                  className="h-full bg-accent"
+                  style={{ width: `${Math.min(100, bellHold * 100)}%` }}
+                />
               </div>
             )}
             {hasLantern && (
-              <div className={`mt-1 flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest ${lanternLit ? "text-accent" : "text-primary"}`}>
+              <div
+                className={`mt-1 flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest ${lanternLit ? "text-accent" : "text-primary"}`}
+              >
                 <Lamp className="h-3 w-3" />
                 {lanternLit ? "East window lit" : "Lantern out"}
               </div>
             )}
             {holesTotal > 0 && (
-              <div className={`mt-1 font-mono text-[10px] uppercase tracking-widest ${holesOpen > 0 ? "text-primary" : "text-accent"}`}>
-                {holesOpen > 0 ? `${holesOpen} ${holesOpen === 1 ? "hole" : "holes"} coughing` : "Holes boarded"}
+              <div
+                className={`mt-1 font-mono text-[10px] uppercase tracking-widest ${holesOpen > 0 ? "text-primary" : "text-accent"}`}
+              >
+                {holesOpen > 0
+                  ? `${holesOpen} ${holesOpen === 1 ? "hole" : "holes"} coughing`
+                  : "Holes boarded"}
               </div>
             )}
             {bloodRush && (
-              <div className="mt-1 animate-pulse font-mono text-[10px] uppercase tracking-widest text-primary">Blood rush</div>
+              <div className="mt-1 animate-pulse font-mono text-[10px] uppercase tracking-widest text-primary">
+                Blood rush
+              </div>
             )}
             {fog && (
-              <div className="mt-1 font-mono text-[10px] uppercase tracking-widest text-muted">Fog in the bottoms</div>
+              <div className="mt-1 font-mono text-[10px] uppercase tracking-widest text-muted">
+                Fog in the bottoms
+              </div>
             )}
           </div>
 
@@ -162,11 +188,14 @@ export function HUD({
             <div className="font-mono text-[10px] uppercase tracking-widest text-muted">Score</div>
             <div className="font-heading text-xl font-bold text-fg">{score.toLocaleString()}</div>
             <div className="font-mono text-[11px] text-accent">Scrap {scrap}</div>
-            {combo > 1 && <div className="font-mono text-[11px] text-primary">×{combo.toFixed(2)} combo</div>}
+            {combo > 1 && (
+              <div className="font-mono text-[11px] text-primary">×{combo.toFixed(2)} combo</div>
+            )}
           </div>
           <button
             type="button"
-            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg"
+            aria-label="Open workbench"
+            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-accent outline-none"
             onClick={onOpenWorkbench}
             title="Workbench"
           >
@@ -174,11 +203,16 @@ export function HUD({
           </button>
           <button
             type="button"
-            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg"
+            aria-label={isMuted ? "Unmute audio" : "Mute audio"}
+            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-accent outline-none"
             onClick={onToggleMute}
-            title="Mute"
+            title={isMuted ? "Unmute" : "Mute"}
           >
-            {isMuted ? <VolumeX className="h-4 w-4 text-primary" /> : <Volume2 className="h-4 w-4 text-accent" />}
+            {isMuted ? (
+              <VolumeX className="h-4 w-4 text-primary" />
+            ) : (
+              <Volume2 className="h-4 w-4 text-accent" />
+            )}
           </button>
         </div>
       </div>
@@ -201,7 +235,7 @@ export function HUD({
               className="flex items-center gap-1 rounded border border-accent/50 bg-surface px-2 py-1 font-mono text-[10px] uppercase text-accent"
             >
               {p.type === "nuke" && <Skull className="h-3 w-3" />}
-              {p.type === "infinite_ammo" && <Infinity className="h-3 w-3" />}
+              {p.type === "infinite_ammo" && <InfinityIcon className="h-3 w-3" />}
               {p.type === "insta_kill" && <Zap className="h-3 w-3" />}
               {p.type.replace("_", " ")} {Math.ceil(p.durationRemaining / 1000)}s
             </div>
@@ -213,7 +247,9 @@ export function HUD({
         <div className="w-48 rounded border border-border bg-surface/85 px-2.5 py-2">
           <div className="mb-1 flex justify-between font-mono text-[10px] uppercase tracking-widest text-muted">
             <span>Vitals</span>
-            <span>{Math.ceil(health)}/{maxHealth}</span>
+            <span>
+              {Math.ceil(health)}/{maxHealth}
+            </span>
           </div>
           <div className="h-2 overflow-hidden rounded bg-surface-2">
             <div
@@ -225,10 +261,14 @@ export function HUD({
             <div className="h-full bg-fg/50" style={{ width: `${stamina}%` }} />
           </div>
           {sneaking && (
-            <div className="mt-1 font-mono text-[10px] uppercase tracking-widest text-accent">Quiet step</div>
+            <div className="mt-1 font-mono text-[10px] uppercase tracking-widest text-accent">
+              Quiet step
+            </div>
           )}
           <div className="mt-1 flex gap-2 font-mono text-[9px] uppercase tracking-widest text-muted">
-            <span className={dodgeReady ? "text-accent" : "text-muted"}>{dodgeReady ? "Roll ready" : "Roll…"}</span>
+            <span className={dodgeReady ? "text-accent" : "text-muted"}>
+              {dodgeReady ? "Roll ready" : "Roll…"}
+            </span>
             <span className={lastStandReady ? "text-fg/70" : "text-primary"}>
               {lastStandReady ? "One stand" : "Stand spent"}
             </span>
@@ -237,9 +277,13 @@ export function HUD({
 
         <div className="min-w-[220px] rounded border border-border bg-surface/90 px-4 py-3 text-center">
           {switchBanner > 0 && (
-            <div className="mb-1 font-heading text-sm uppercase tracking-widest text-accent">Equipped</div>
+            <div className="mb-1 font-heading text-sm uppercase tracking-widest text-accent">
+              Equipped
+            </div>
           )}
-          <div className="font-mono text-[10px] uppercase tracking-widest text-muted">{weapon.category}</div>
+          <div className="font-mono text-[10px] uppercase tracking-widest text-muted">
+            {weapon.category}
+          </div>
           <div className="font-heading text-lg font-bold text-fg">{weapon.name}</div>
           <div className="mt-1 font-mono text-sm text-accent">
             {weapon.currentMag} <span className="text-muted">/ {weapon.reserveAmmo}</span>
@@ -278,15 +322,15 @@ export function HUD({
         </div>
 
         {helpVisible && (
-        <div className="hidden w-44 rounded border border-border bg-surface/70 p-2 font-mono text-[10px] uppercase leading-relaxed tracking-wider text-muted md:block">
-          WASD move · mouse aim
-          <br />
-          click fire · Space roll · F bash
-          <br />
-          Q mash · 1–6 guns · E interact
-          <br />
-          Tab shop
-        </div>
+          <div className="hidden w-44 rounded border border-border bg-surface/70 p-2 font-mono text-[10px] uppercase leading-relaxed tracking-wider text-muted md:block">
+            WASD move · mouse aim
+            <br />
+            click fire · Space roll · F bash
+            <br />
+            Q mash · 1–6 guns · E interact
+            <br />
+            Tab shop
+          </div>
         )}
       </div>
     </div>
