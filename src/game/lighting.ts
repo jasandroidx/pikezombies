@@ -11,6 +11,7 @@ interface LightSource {
 export class DynamicLighting {
   private darknessCanvas: HTMLCanvasElement;
   private darknessCtx: CanvasRenderingContext2D;
+  private fogCanvas: HTMLCanvasElement | null = null;
   private fogParticles: { x: number; y: number; vx: number; vy: number; radius: number; alpha: number }[] = [];
 
   constructor() {
@@ -145,23 +146,39 @@ export class DynamicLighting {
     this.renderFog(targetCtx, width, height);
   }
 
+  // ⚡ Bolt Optimization: Lazy pre-render radial fog particle texture once to an offscreen
+  // canvas, eliminating 40 CanvasRadialGradient object allocations and 120 addColorStop calls
+  // per frame in the 60 FPS game loop.
+  private getFogTexture(): HTMLCanvasElement {
+    if (this.fogCanvas) return this.fogCanvas;
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d')!;
+    const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+    grad.addColorStop(0, 'rgba(168, 176, 142, 1.0)');
+    grad.addColorStop(0.6, 'rgba(120, 132, 108, 0.518)');
+    grad.addColorStop(1, 'rgba(90, 100, 80, 0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(128, 128, 128, 0, Math.PI * 2);
+    ctx.fill();
+    this.fogCanvas = canvas;
+    return canvas;
+  }
+
   private renderFog(ctx: CanvasRenderingContext2D, width: number, height: number) {
     ctx.save();
+    const texture = this.getFogTexture();
     for (const p of this.fogParticles) {
       p.x += p.vx;
       p.y += p.vy;
       if (p.x > width + p.radius) p.x = -p.radius;
       if (p.y > height + p.radius) p.y = -p.radius;
 
-      const fogGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-      fogGrad.addColorStop(0, `rgba(168, 176, 142, ${p.alpha * 1.35})`);
-      fogGrad.addColorStop(0.6, `rgba(120, 132, 108, ${p.alpha * 0.7})`);
-      fogGrad.addColorStop(1, "rgba(90, 100, 80, 0)");
-
-      ctx.fillStyle = fogGrad;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.globalAlpha = p.alpha * 1.35;
+      const size = p.radius * 2;
+      ctx.drawImage(texture, p.x - p.radius, p.y - p.radius, size, size);
     }
     ctx.restore();
   }
