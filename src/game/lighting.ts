@@ -12,10 +12,28 @@ export class DynamicLighting {
   private darknessCanvas: HTMLCanvasElement;
   private darknessCtx: CanvasRenderingContext2D;
   private fogParticles: { x: number; y: number; vx: number; vy: number; radius: number; alpha: number }[] = [];
+  // Reusable pre-rendered offscreen canvas texture for fog particles to eliminate per-frame CanvasGradient allocations
+  private fogTexture: HTMLCanvasElement;
 
   constructor() {
     this.darknessCanvas = document.createElement('canvas');
     this.darknessCtx = this.darknessCanvas.getContext('2d')!;
+
+    // Pre-render fog particle texture once to avoid 40 RadialGradient & string allocations every frame (60 FPS)
+    this.fogTexture = document.createElement('canvas');
+    this.fogTexture.width = 256;
+    this.fogTexture.height = 256;
+    const fCtx = this.fogTexture.getContext('2d');
+    if (fCtx) {
+      const fogGrad = fCtx.createRadialGradient(128, 128, 0, 128, 128, 128);
+      fogGrad.addColorStop(0, "rgba(168, 176, 142, 1.0)");
+      fogGrad.addColorStop(0.6, `rgba(120, 132, 108, ${0.7 / 1.35})`);
+      fogGrad.addColorStop(1, "rgba(90, 100, 80, 0)");
+      fCtx.fillStyle = fogGrad;
+      fCtx.beginPath();
+      fCtx.arc(128, 128, 128, 0, Math.PI * 2);
+      fCtx.fill();
+    }
 
     // Drifting Patoka fog
     for (let i = 0; i < 40; i++) {
@@ -145,6 +163,12 @@ export class DynamicLighting {
     this.renderFog(targetCtx, width, height);
   }
 
+  /**
+   * Render Drifting Fog Clouds using pre-rendered fogTexture sprite blits.
+   * Optimization: Uses drawImage with globalAlpha instead of re-creating 40 radial gradients,
+   * color string formats, and circular arc paths every frame.
+   * Eliminates ~2,400 CanvasGradient allocations/sec and ~7,200 color parsing operations/sec.
+   */
   private renderFog(ctx: CanvasRenderingContext2D, width: number, height: number) {
     ctx.save();
     for (const p of this.fogParticles) {
@@ -153,15 +177,9 @@ export class DynamicLighting {
       if (p.x > width + p.radius) p.x = -p.radius;
       if (p.y > height + p.radius) p.y = -p.radius;
 
-      const fogGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-      fogGrad.addColorStop(0, `rgba(168, 176, 142, ${p.alpha * 1.35})`);
-      fogGrad.addColorStop(0.6, `rgba(120, 132, 108, ${p.alpha * 0.7})`);
-      fogGrad.addColorStop(1, "rgba(90, 100, 80, 0)");
-
-      ctx.fillStyle = fogGrad;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.globalAlpha = p.alpha * 1.35;
+      const diameter = p.radius * 2;
+      ctx.drawImage(this.fogTexture, p.x - p.radius, p.y - p.radius, diameter, diameter);
     }
     ctx.restore();
   }
