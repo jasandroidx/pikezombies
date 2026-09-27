@@ -27,8 +27,9 @@ export function LoreNoteModal({ note, onClose }: LoreNoteModalProps) {
             id="close-lore-modal-btn"
             type="button"
             onClick={onClose}
-            className="rounded border border-border bg-bg p-2 text-muted hover:text-fg"
+            aria-label="Close note"
             title="Close Note (Esc)"
+            className="rounded border border-border bg-bg p-2 text-muted hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <X className="h-5 w-5" />
           </button>
