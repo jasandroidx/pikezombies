@@ -90,7 +90,13 @@ export function MobileControls({
       </div>
 
       <div className="pointer-events-auto mb-2 flex items-center gap-2.5">
-        <button type="button" onClick={onPrevWeapon} className="rounded-full border border-border bg-surface/80 p-3 text-fg" title="Previous Weapon">
+        <button
+          type="button"
+          onClick={onPrevWeapon}
+          className="rounded-full border border-border bg-surface/80 p-3 text-fg focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+          title="Previous weapon"
+          aria-label="Previous weapon"
+        >
           <ChevronLeft className="h-5 w-5" />
         </button>
         {onSneakToggle && (
@@ -101,19 +107,32 @@ export function MobileControls({
               setSneaking(next);
               onSneakToggle(next);
             }}
-            className={`rounded-full border p-3 ${sneaking ? "border-accent bg-surface-2 text-accent" : "border-border bg-surface/80 text-fg"}`}
+            className={`rounded-full border p-3 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${sneaking ? "border-accent bg-surface-2 text-accent" : "border-border bg-surface/80 text-fg"}`}
             title="Quiet step"
+            aria-label="Quiet step"
           >
             <Footprints className="h-5 w-5" />
           </button>
         )}
         {onDodge && (
-          <button type="button" onClick={onDodge} className="rounded-full border border-accent bg-surface-2 p-3.5 text-accent" title="Roll">
+          <button
+            type="button"
+            onClick={onDodge}
+            className="rounded-full border border-accent bg-surface-2 p-3.5 text-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+            title="Roll"
+            aria-label="Roll"
+          >
             <ChevronsRight className="h-5 w-5" />
           </button>
         )}
         {onBash && (
-          <button type="button" onClick={onBash} className="rounded-full border border-border bg-surface/80 p-3.5 text-fg" title="Bash">
+          <button
+            type="button"
+            onClick={onBash}
+            className="rounded-full border border-border bg-surface/80 p-3.5 text-fg focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+            title="Bash"
+            aria-label="Bash"
+          >
             <Hammer className="h-5 w-5" />
           </button>
         )}
@@ -125,19 +144,38 @@ export function MobileControls({
             onTouchEnd={() => onInteractHold?.(false)}
             onMouseDown={() => onInteractHold?.(true)}
             onMouseUp={() => onInteractHold?.(false)}
-            className="rounded-full border border-accent bg-surface-2 p-3.5 text-accent"
+            className="rounded-full border border-accent bg-surface-2 p-3.5 text-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
             title="Interact"
+            aria-label="Interact"
           >
             <FileText className="h-5 w-5" />
           </button>
         )}
-        <button type="button" onClick={onThrowMolotov} className="rounded-full border border-primary bg-surface-2 p-3.5 text-primary" title="Throw Molotov">
+        <button
+          type="button"
+          onClick={onThrowMolotov}
+          className="rounded-full border border-primary bg-surface-2 p-3.5 text-primary focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+          title="Throw molotov"
+          aria-label="Throw molotov"
+        >
           <Flame className="h-6 w-6" />
         </button>
-        <button type="button" onClick={onReload} className="rounded-full border border-border bg-surface/80 p-3.5 text-fg" title="Reload">
+        <button
+          type="button"
+          onClick={onReload}
+          className="rounded-full border border-border bg-surface/80 p-3.5 text-fg focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+          title="Reload weapon"
+          aria-label="Reload weapon"
+        >
           <RotateCcw className="h-5 w-5" />
         </button>
-        <button type="button" onClick={onNextWeapon} className="rounded-full border border-border bg-surface/80 p-3 text-fg" title="Next Weapon">
+        <button
+          type="button"
+          onClick={onNextWeapon}
+          className="rounded-full border border-border bg-surface/80 p-3 text-fg focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+          title="Next weapon"
+          aria-label="Next weapon"
+        >
           <ChevronRight className="h-5 w-5" />
         </button>
       </div>
