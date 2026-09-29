@@ -1288,10 +1288,14 @@ export class GameEngine {
 			}
 			let m = r.x + f, h = r.y + p;
 			this.checkObstacleCollision(m, r.y, r.radius) ? (this.smashBarricadeAt(m, r.y, r.damage * .08), this.smashHoleAt(m, r.y, r.damage * .12)) : r.x = m, this.checkObstacleCollision(r.x, h, r.radius) ? (this.smashBarricadeAt(r.x, h, r.damage * .08), this.smashHoleAt(r.x, h, r.damage * .12)) : r.y = h;
+			// Optimized zombie-zombie separation: use bounding box check and squared distance to avoid Math.hypot/Math.sqrt when not colliding
 			for (let e = 0; e < this.zombies.length; e++) {
 				if (n === e) continue;
-				let t = this.zombies[e], i = r.x - t.x, a = r.y - t.y, o = Math.hypot(i, a), s = r.radius + t.radius;
-				if (o < s && o > 0) {
+				let t = this.zombies[e], i = r.x - t.x, a = r.y - t.y, s = r.radius + t.radius;
+				if (Math.abs(i) >= s || Math.abs(a) >= s) continue;
+				let distSq = i * i + a * a;
+				if (distSq < s * s && distSq > 0) {
+					let o = Math.sqrt(distSq);
 					let e = (s - o) * .15;
 					r.x += i / o * e, r.y += a / o * e;
 				}
@@ -1904,13 +1908,27 @@ export class GameEngine {
 		const camT = this.camY - this.canvas.height / 2 - 80;
 		const camR = camL + this.canvas.width + 160;
 		const camB = camT + this.canvas.height + 160;
-		const elites = this.zombies.filter((t) => t.x >= camL && t.x <= camR && t.y >= camT && t.y <= camB && (t.type === "sprinter" || t.type === "miner_brute" || t.type === "bloater_spitter" || t.type === "behemoth"));
-		if (!elites.length) return;
-		elites.sort((a, b) => Math.hypot(a.x - this.player.x, a.y - this.player.y) - Math.hypot(b.x - this.player.x, b.y - this.player.y));
-		const t = elites[0];
-		const label = ZOMBIE_LABELS[t.type] || "WILD";
-		const labelSize = t.type === "behemoth" ? 26 : 18;
-		drawWildLabel(e, label, t.x, t.y - t.radius - 20, labelSize, this.simTime);
+		// Optimized: Linear scan for closest elite zombie using squared distance to prevent array allocation (.filter / .sort) and Math.hypot overhead
+		let nearestElite = null;
+		let minDistSq = 1e9;
+		const px = this.player.x;
+		const py = this.player.y;
+		for (const z of this.zombies) {
+			if (z.x >= camL && z.x <= camR && z.y >= camT && z.y <= camB &&
+				(z.type === "sprinter" || z.type === "miner_brute" || z.type === "bloater_spitter" || z.type === "behemoth")) {
+				const dx = z.x - px;
+				const dy = z.y - py;
+				const distSq = dx * dx + dy * dy;
+				if (distSq < minDistSq) {
+					minDistSq = distSq;
+					nearestElite = z;
+				}
+			}
+		}
+		if (!nearestElite) return;
+		const label = ZOMBIE_LABELS[nearestElite.type] || "WILD";
+		const labelSize = nearestElite.type === "behemoth" ? 26 : 18;
+		drawWildLabel(e, label, nearestElite.x, nearestElite.y - nearestElite.radius - 20, labelSize, this.simTime);
 	}
 	renderEyeshine(e, camL, camT) {
 		const range = this.player.flashlightRange * 1.55;
@@ -1952,10 +1970,14 @@ export class GameEngine {
 		if (loc.lantern) ticks.push({ x: loc.lantern.x, y: loc.lantern.y, color: "#d4a017" });
 		if (loc.extract) ticks.push({ x: loc.extract.x, y: loc.extract.y, color: "#d4a017" });
 		if (loc.bell && this.bellReady) ticks.push({ x: loc.bell.x, y: loc.bell.y, color: "#d4a017" });
-		let nearest = null, nd = 1e9;
+		let nearest = null, ndSq = 1e9;
+		const px = this.player.x;
+		const py = this.player.y;
 		for (const z of this.zombies) {
-			const d = Math.hypot(z.x - this.player.x, z.y - this.player.y);
-			if (d < nd) { nd = d; nearest = z; }
+			const dx = z.x - px;
+			const dy = z.y - py;
+			const dSq = dx * dx + dy * dy;
+			if (dSq < ndSq) { ndSq = dSq; nearest = z; }
 		}
 		if (nearest) ticks.push({ x: nearest.x, y: nearest.y, color: "#c23b22" });
 		for (const t of ticks) {
