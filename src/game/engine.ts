@@ -1013,7 +1013,8 @@ export class GameEngine {
 			let i = false;
 			for (let e = this.explosiveBarrels.length - 1; e >= 0; e--) {
 				let r = this.explosiveBarrels[e];
-				if (Math.hypot(r.x - n.x, r.y - n.y) <= r.radius + n.radius) {
+				const bdx = r.x - n.x, bdy = r.y - n.y, maxR = r.radius + n.radius;
+				if (bdx * bdx + bdy * bdy <= maxR * maxR) {
 					r.health -= n.damage, this.createHitSparks(n.x, n.y, `#ef4444`), soundEngine.playZombieHit(false), r.health <= 0 && this.detonateExplosiveBarrel(r, e), this.bullets.splice(t, 1), i = true;
 					break;
 				}
@@ -1029,7 +1030,8 @@ export class GameEngine {
 				}
 				for (let e = this.zombies.length - 1; e >= 0; e--) {
 					let r = this.zombies[e];
-					if (Math.hypot(r.x - n.x, r.y - n.y) <= r.radius + n.radius) {
+					const zdx = r.x - n.x, zdy = r.y - n.y, maxR = r.radius + n.radius;
+					if (zdx * zdx + zdy * zdy <= maxR * maxR) {
 						this.stats.shotsHit++;
 						let e = this.checkHeadshot(n, r), i = n.damage;
 						this.hasPowerup(`insta_kill`) ? i = 99999 : e ? r.hasHelmet ? (r.hasHelmet = false, this.createHitSparks(r.x, r.y, `#eab308`), soundEngine.playZombieHit(false), i *= .6) : (i *= 2.4, this.stats.headshots++, soundEngine.playZombieHit(true)) : soundEngine.playZombieHit(false), r.health -= i, this.stats.damageDealt += i;
@@ -1117,8 +1119,16 @@ export class GameEngine {
 				this.firePuddles.splice(t, 1);
 				continue;
 			}
-			for (let e of this.zombies) Math.hypot(e.x - n.x, e.y - n.y) <= n.radius && (e.health -= .9, e.isBurning = 3e3);
-			Math.hypot(this.player.x - n.x, this.player.y - n.y) <= n.radius && this.damagePlayer(.3);
+			const r2 = n.radius * n.radius;
+			for (let e of this.zombies) {
+				const zdx = e.x - n.x, zdy = e.y - n.y;
+				if (zdx * zdx + zdy * zdy <= r2) {
+					e.health -= .9;
+					e.isBurning = 3e3;
+				}
+			}
+			const pdx = this.player.x - n.x, pdy = this.player.y - n.y;
+			if (pdx * pdx + pdy * pdy <= r2) this.damagePlayer(.3);
 		}
 	}
 	updateAcidSpits(e) {
@@ -1290,8 +1300,10 @@ export class GameEngine {
 			this.checkObstacleCollision(m, r.y, r.radius) ? (this.smashBarricadeAt(m, r.y, r.damage * .08), this.smashHoleAt(m, r.y, r.damage * .12)) : r.x = m, this.checkObstacleCollision(r.x, h, r.radius) ? (this.smashBarricadeAt(r.x, h, r.damage * .08), this.smashHoleAt(r.x, h, r.damage * .12)) : r.y = h;
 			for (let e = 0; e < this.zombies.length; e++) {
 				if (n === e) continue;
-				let t = this.zombies[e], i = r.x - t.x, a = r.y - t.y, o = Math.hypot(i, a), s = r.radius + t.radius;
-				if (o < s && o > 0) {
+				let t = this.zombies[e], i = r.x - t.x, a = r.y - t.y, s = r.radius + t.radius;
+				let d2 = i * i + a * a;
+				if (d2 < s * s && d2 > 0) {
+					let o = Math.sqrt(d2);
 					let e = (s - o) * .15;
 					r.x += i / o * e, r.y += a / o * e;
 				}
@@ -1395,7 +1407,8 @@ export class GameEngine {
 	updateDrops() {
 		for (let e = this.drops.length - 1; e >= 0; e--) {
 			let t = this.drops[e];
-			if (Math.hypot(this.player.x - t.x, this.player.y - t.y) <= this.player.radius + 18) {
+			const ddx = this.player.x - t.x, ddy = this.player.y - t.y, maxR = this.player.radius + 18;
+			if (ddx * ddx + ddy * ddy <= maxR * maxR) {
 				if (soundEngine.playPickup(), t.type === `ammo_universal`) for (let e of this.weapons) e.unlocked && (e.reserveAmmo = Math.min(e.maxReserveAmmo, e.reserveAmmo + Math.floor(e.magazineSize * 1.5)));
 				else t.type === `moonshine_med` ? (this.player.health = Math.min(this.player.maxHealth, this.player.health + t.amount), this.player.stamina = this.player.maxStamina) : t.type === `molotov_pickup` ? this.player.molotovs = Math.min(this.player.maxMolotovs, this.player.molotovs + 1) : t.type === `scrap` ? (this.scrap += t.amount, this.stats.scrapCollected += t.amount) : (t.type === `nuke` || t.type === `insta_kill` || t.type === `double_points` || t.type === `infinite_ammo` || t.type === `speed_boost`) && this.activatePowerup(t.type);
 				this.drops.splice(e, 1);
@@ -1446,7 +1459,10 @@ export class GameEngine {
 		for (let r of this.currentLocation.obstacles) if (e + n > r.x && e - n < r.x + r.width && t + n > r.y && t - n < r.y + r.height) return true;
 		for (let r of this.barricades) if (!(r.health <= 0) && e + n > r.x && e - n < r.x + r.width && t + n > r.y && t - n < r.y + r.height) return true;
 		if (r) {
-			for (let r of this.explosiveBarrels) if (Math.hypot(e - r.x, t - r.y) < n + r.radius) return true;
+			for (let r of this.explosiveBarrels) {
+				const bdx = e - r.x, bdy = t - r.y, maxR = n + r.radius;
+				if (bdx * bdx + bdy * bdy < maxR * maxR) return true;
+			}
 		}
 		return false;
 	}
@@ -1498,9 +1514,12 @@ export class GameEngine {
 	updateLantern() {
 		let e = this.currentLocation.lantern;
 		if (e && this.lanternLit) {
-			for (let t of this.zombies) if (Math.hypot(t.x - e.x, t.y - e.y) < 44) {
-				this.snuffLantern();
-				return;
+			for (let t of this.zombies) {
+				const ldx = t.x - e.x, ldy = t.y - e.y;
+				if (ldx * ldx + ldy * ldy < 1936) {
+					this.snuffLantern();
+					return;
+				}
 			}
 		}
 	}
@@ -1543,7 +1562,15 @@ export class GameEngine {
 				life: .7,
 				maxLife: .7
 			}), this.noisePulses.length > 10 && this.noisePulses.shift();
-			for (let r of this.zombies) Math.hypot(r.x - e, r.y - t) <= n && (r.hearX = e, r.hearY = t, r.ai === `wander` && (r.ai = `investigate`));
+			const n2 = n * n;
+			for (let r of this.zombies) {
+				const zdx = r.x - e, zdy = r.y - t;
+				if (zdx * zdx + zdy * zdy <= n2) {
+					r.hearX = e;
+					r.hearY = t;
+					if (r.ai === `wander`) r.ai = `investigate`;
+				}
+			}
 		}
 	}
 	spawnFloater(e, t, n, r) {
@@ -1631,7 +1658,11 @@ export class GameEngine {
 			y: e.y - u
 		})), m = (this.currentLocation.lights || []).filter((e) => {
 			let t = this.currentLocation.lantern;
-			return t && Math.hypot(e.x - t.x, e.y - t.y) < 90 ? this.lanternLit : true;
+			if (t) {
+				const ldx = e.x - t.x, ldy = e.y - t.y;
+				if (ldx * ldx + ldy * ldy < 8100) return this.lanternLit;
+			}
+			return true;
 		}).map((e) => ({
 			x: e.x - l,
 			y: e.y - u,
@@ -1906,7 +1937,11 @@ export class GameEngine {
 		const camB = camT + this.canvas.height + 160;
 		const elites = this.zombies.filter((t) => t.x >= camL && t.x <= camR && t.y >= camT && t.y <= camB && (t.type === "sprinter" || t.type === "miner_brute" || t.type === "bloater_spitter" || t.type === "behemoth"));
 		if (!elites.length) return;
-		elites.sort((a, b) => Math.hypot(a.x - this.player.x, a.y - this.player.y) - Math.hypot(b.x - this.player.x, b.y - this.player.y));
+		elites.sort((a, b) => {
+			const dxa = a.x - this.player.x, dya = a.y - this.player.y;
+			const dxb = b.x - this.player.x, dyb = b.y - this.player.y;
+			return (dxa * dxa + dya * dya) - (dxb * dxb + dyb * dyb);
+		});
 		const t = elites[0];
 		const label = ZOMBIE_LABELS[t.type] || "WILD";
 		const labelSize = t.type === "behemoth" ? 26 : 18;
@@ -1952,10 +1987,12 @@ export class GameEngine {
 		if (loc.lantern) ticks.push({ x: loc.lantern.x, y: loc.lantern.y, color: "#d4a017" });
 		if (loc.extract) ticks.push({ x: loc.extract.x, y: loc.extract.y, color: "#d4a017" });
 		if (loc.bell && this.bellReady) ticks.push({ x: loc.bell.x, y: loc.bell.y, color: "#d4a017" });
-		let nearest = null, nd = 1e9;
+		let nearest = null, nd2 = 1e18;
 		for (const z of this.zombies) {
-			const d = Math.hypot(z.x - this.player.x, z.y - this.player.y);
-			if (d < nd) { nd = d; nearest = z; }
+			const dx = z.x - this.player.x;
+			const dy = z.y - this.player.y;
+			const d2 = dx * dx + dy * dy;
+			if (d2 < nd2) { nd2 = d2; nearest = z; }
 		}
 		if (nearest) ticks.push({ x: nearest.x, y: nearest.y, color: "#c23b22" });
 		for (const t of ticks) {
