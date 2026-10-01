@@ -34,13 +34,31 @@ export function StartScreen({ onStartGame, isMuted, onToggleMute }: StartScreenP
               Record {save.highScore.toLocaleString()} · Wave {save.bestWave}
             </div>
           )}
-          <button type="button" className="rounded border border-border bg-surface p-2" onClick={() => setShowJournal((v) => !v)}>
+          <button
+            type="button"
+            aria-label="Toggle County Journal"
+            title="County Journal"
+            className="rounded border border-border bg-surface p-2 focus-visible:ring-2 focus-visible:ring-accent outline-none"
+            onClick={() => setShowJournal((v) => !v)}
+          >
             <BookOpen className="h-4 w-4 text-accent" />
           </button>
-          <button type="button" className="rounded border border-border bg-surface p-2" onClick={() => setShowHelp((v) => !v)}>
+          <button
+            type="button"
+            aria-label="Toggle Help Controls"
+            title="Help Controls"
+            className="rounded border border-border bg-surface p-2 focus-visible:ring-2 focus-visible:ring-accent outline-none"
+            onClick={() => setShowHelp((v) => !v)}
+          >
             <HelpCircle className="h-4 w-4 text-fg" />
           </button>
-          <button type="button" className="rounded border border-border bg-surface p-2" onClick={onToggleMute}>
+          <button
+            type="button"
+            aria-label={isMuted ? "Unmute Audio" : "Mute Audio"}
+            title={isMuted ? "Unmute Audio" : "Mute Audio"}
+            className="rounded border border-border bg-surface p-2 focus-visible:ring-2 focus-visible:ring-accent outline-none"
+            onClick={onToggleMute}
+          >
             {isMuted ? <VolumeX className="h-4 w-4 text-primary" /> : <Volume2 className="h-4 w-4 text-accent" />}
           </button>
         </div>
