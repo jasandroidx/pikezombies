@@ -79,7 +79,14 @@ export function UpgradeShopModal({
               <span className="font-mono text-[10px] uppercase text-muted">Scrap </span>
               <span className="font-heading text-lg font-bold text-accent">{scrap}</span>
             </div>
-            <button id="shop-close-btn" type="button" onClick={onClose} className="rounded border border-border bg-surface p-2 text-muted hover:text-fg">
+            <button
+              id="shop-close-btn"
+              type="button"
+              aria-label="Close workbench"
+              title="Close workbench"
+              onClick={onClose}
+              className="rounded border border-border bg-surface p-2 text-muted hover:text-fg focus-visible:ring-2 focus-visible:ring-accent outline-none"
+            >
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -92,7 +99,7 @@ export function UpgradeShopModal({
               id={`shop-tab-${tab.id}`}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-3 font-heading text-sm font-bold uppercase tracking-wider ${
+              className={`px-4 py-3 font-heading text-sm font-bold uppercase tracking-wider focus-visible:ring-2 focus-visible:ring-accent outline-none ${
                 activeTab === tab.id ? "border-b-2 border-accent text-accent" : "text-muted hover:text-fg"
               }`}
             >
