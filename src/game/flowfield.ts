@@ -16,7 +16,11 @@ export class FlowField {
     this.cols = Math.max(1, Math.ceil(mapW / this.cell));
     this.rows = Math.max(1, Math.ceil(mapH / this.cell));
     const n = this.cols * this.rows;
-    this.block = new Uint8Array(n);
+    if (this.block.length !== n) {
+      this.block = new Uint8Array(n);
+    } else {
+      this.block.fill(0);
+    }
     if (this.dist.length !== n) {
       this.dist = new Float32Array(n);
       this.q = new Int32Array(n);
@@ -99,7 +103,11 @@ export class FlowField {
     }
   }
 
-  dir(x: number, y: number): { x: number; y: number } | null {
+  /**
+   * Queries the direction vector towards the target from (x, y).
+   * Supports an optional output vector object `out` to allow zero-allocation queries in hot loops.
+   */
+  dir(x: number, y: number, out?: { x: number; y: number }): { x: number; y: number } | null {
     const C = this.cols;
     const R = this.rows;
     if (C < 2 || R < 2) return null;
@@ -128,6 +136,9 @@ export class FlowField {
     }
     if (!bx && !by) return null;
     const m = Math.hypot(bx, by) || 1;
-    return { x: bx / m, y: by / m };
+    const target = out ?? { x: 0, y: 0 };
+    target.x = bx / m;
+    target.y = by / m;
+    return target;
   }
 }
