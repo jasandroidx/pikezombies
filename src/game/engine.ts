@@ -149,6 +149,7 @@ export class GameEngine {
 	pumpAnim = 0;
 	switchBanner = 0;
 	flow = new FlowField();
+	dirVec = { x: 0, y: 0 };
 	flowRebuild = 0;
 	lighting;
 	comboMultiplier = 1;
@@ -1273,7 +1274,7 @@ export class GameEngine {
 			else if (this.worldSlow > 0) u *= .4;
 			let d = e * 60, f, p;
 			if ((r.ai === `chase` || r.ai === `attack`) && u > 0) {
-				const flow = this.flow.dir(r.x, r.y);
+				const flow = this.flow.dir(r.x, r.y, this.dirVec);
 				if (flow) {
 					r.angle = Math.atan2(flow.y, flow.x);
 					f = flow.x * u * d;
