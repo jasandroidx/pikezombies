@@ -1288,10 +1288,15 @@ export class GameEngine {
 			}
 			let m = r.x + f, h = r.y + p;
 			this.checkObstacleCollision(m, r.y, r.radius) ? (this.smashBarricadeAt(m, r.y, r.damage * .08), this.smashHoleAt(m, r.y, r.damage * .12)) : r.x = m, this.checkObstacleCollision(r.x, h, r.radius) ? (this.smashBarricadeAt(r.x, h, r.damage * .08), this.smashHoleAt(r.x, h, r.damage * .12)) : r.y = h;
+			// Performance Optimization: Check squared distance first to avoid expensive Math.hypot (square root) calculation
+			// for non-overlapping zombies in the O(N^2) collision resolution loop during high zombie counts.
 			for (let e = 0; e < this.zombies.length; e++) {
 				if (n === e) continue;
-				let t = this.zombies[e], i = r.x - t.x, a = r.y - t.y, o = Math.hypot(i, a), s = r.radius + t.radius;
-				if (o < s && o > 0) {
+				let t = this.zombies[e], i = r.x - t.x, a = r.y - t.y;
+				let s = r.radius + t.radius;
+				let distSq = i * i + a * a;
+				if (distSq < s * s && distSq > 0) {
+					let o = Math.sqrt(distSq);
 					let e = (s - o) * .15;
 					r.x += i / o * e, r.y += a / o * e;
 				}
