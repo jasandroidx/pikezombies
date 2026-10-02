@@ -90,7 +90,7 @@ export function MobileControls({
       </div>
 
       <div className="pointer-events-auto mb-2 flex items-center gap-2.5">
-        <button type="button" onClick={onPrevWeapon} className="rounded-full border border-border bg-surface/80 p-3 text-fg" title="Previous Weapon">
+        <button type="button" onClick={onPrevWeapon} className="rounded-full border border-border bg-surface/80 p-3 text-fg" aria-label="Previous Weapon" title="Previous Weapon">
           <ChevronLeft className="h-5 w-5" />
         </button>
         {onSneakToggle && (
@@ -102,18 +102,19 @@ export function MobileControls({
               onSneakToggle(next);
             }}
             className={`rounded-full border p-3 ${sneaking ? "border-accent bg-surface-2 text-accent" : "border-border bg-surface/80 text-fg"}`}
+            aria-label="Quiet step"
             title="Quiet step"
           >
             <Footprints className="h-5 w-5" />
           </button>
         )}
         {onDodge && (
-          <button type="button" onClick={onDodge} className="rounded-full border border-accent bg-surface-2 p-3.5 text-accent" title="Roll">
+          <button type="button" onClick={onDodge} className="rounded-full border border-accent bg-surface-2 p-3.5 text-accent" aria-label="Roll" title="Roll">
             <ChevronsRight className="h-5 w-5" />
           </button>
         )}
         {onBash && (
-          <button type="button" onClick={onBash} className="rounded-full border border-border bg-surface/80 p-3.5 text-fg" title="Bash">
+          <button type="button" onClick={onBash} className="rounded-full border border-border bg-surface/80 p-3.5 text-fg" aria-label="Bash" title="Bash">
             <Hammer className="h-5 w-5" />
           </button>
         )}
@@ -126,18 +127,19 @@ export function MobileControls({
             onMouseDown={() => onInteractHold?.(true)}
             onMouseUp={() => onInteractHold?.(false)}
             className="rounded-full border border-accent bg-surface-2 p-3.5 text-accent"
+            aria-label="Interact"
             title="Interact"
           >
             <FileText className="h-5 w-5" />
           </button>
         )}
-        <button type="button" onClick={onThrowMolotov} className="rounded-full border border-primary bg-surface-2 p-3.5 text-primary" title="Throw Molotov">
+        <button type="button" onClick={onThrowMolotov} className="rounded-full border border-primary bg-surface-2 p-3.5 text-primary" aria-label="Throw Molotov" title="Throw Molotov">
           <Flame className="h-6 w-6" />
         </button>
-        <button type="button" onClick={onReload} className="rounded-full border border-border bg-surface/80 p-3.5 text-fg" title="Reload">
+        <button type="button" onClick={onReload} className="rounded-full border border-border bg-surface/80 p-3.5 text-fg" aria-label="Reload" title="Reload">
           <RotateCcw className="h-5 w-5" />
         </button>
-        <button type="button" onClick={onNextWeapon} className="rounded-full border border-border bg-surface/80 p-3 text-fg" title="Next Weapon">
+        <button type="button" onClick={onNextWeapon} className="rounded-full border border-border bg-surface/80 p-3 text-fg" aria-label="Next Weapon" title="Next Weapon">
           <ChevronRight className="h-5 w-5" />
         </button>
       </div>

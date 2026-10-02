@@ -1,5 +1,5 @@
 import { Weapon, ActivePowerup } from "@/types/game";
-import { Volume2, VolumeX, Flame, Wrench, Zap, Skull, Infinity, Radio, Lamp, Bell } from "lucide-react";
+import { Volume2, VolumeX, Flame, Wrench, Zap, Skull, Infinity as InfinityIcon, Radio, Lamp, Bell } from "lucide-react";
 
 interface HUDProps {
   health: number;
@@ -149,7 +149,7 @@ export function HUD({
           {waveTimer > 0 && !extractActive && !bellReady && (
             <button
               type="button"
-              className="pointer-events-auto w-fit rounded border border-border bg-surface-2 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-fg"
+              className="pointer-events-auto w-fit rounded border border-border bg-surface-2 px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-fg focus-visible:ring-2 focus-visible:ring-accent outline-none"
               onClick={onSkipWaveTimer}
             >
               Skip break
@@ -166,17 +166,19 @@ export function HUD({
           </div>
           <button
             type="button"
-            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg"
-            onClick={onOpenWorkbench}
+            aria-label="Workbench"
             title="Workbench"
+            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg focus-visible:ring-2 focus-visible:ring-accent outline-none"
+            onClick={onOpenWorkbench}
           >
             <Wrench className="h-4 w-4 text-accent" />
           </button>
           <button
             type="button"
-            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg"
+            aria-label={isMuted ? "Unmute Audio" : "Mute Audio"}
+            title={isMuted ? "Unmute Audio" : "Mute Audio"}
+            className="pointer-events-auto rounded border border-border bg-surface p-2 text-fg focus-visible:ring-2 focus-visible:ring-accent outline-none"
             onClick={onToggleMute}
-            title="Mute"
           >
             {isMuted ? <VolumeX className="h-4 w-4 text-primary" /> : <Volume2 className="h-4 w-4 text-accent" />}
           </button>
@@ -201,7 +203,7 @@ export function HUD({
               className="flex items-center gap-1 rounded border border-accent/50 bg-surface px-2 py-1 font-mono text-[10px] uppercase text-accent"
             >
               {p.type === "nuke" && <Skull className="h-3 w-3" />}
-              {p.type === "infinite_ammo" && <Infinity className="h-3 w-3" />}
+              {p.type === "infinite_ammo" && <InfinityIcon className="h-3 w-3" />}
               {p.type === "insta_kill" && <Zap className="h-3 w-3" />}
               {p.type.replace("_", " ")} {Math.ceil(p.durationRemaining / 1000)}s
             </div>
@@ -261,7 +263,7 @@ export function HUD({
                   type="button"
                   disabled={!w.unlocked}
                   onClick={() => w.unlocked && onSelectWeapon?.(i)}
-                  className={`pointer-events-auto min-w-7 rounded border px-1.5 py-0.5 font-mono text-[10px] ${
+                  className={`pointer-events-auto min-w-7 rounded border px-1.5 py-0.5 font-mono text-[10px] focus-visible:ring-2 focus-visible:ring-accent outline-none ${
                     !w.unlocked
                       ? "cursor-not-allowed border-border text-muted/40"
                       : i === weaponIndex
@@ -269,6 +271,7 @@ export function HUD({
                         : "border-border bg-surface-2 text-fg hover:border-accent"
                   }`}
                   title={w.unlocked ? w.name : "Locked"}
+                  aria-label={w.unlocked ? `Select weapon ${i + 1}: ${w.name}` : `Weapon ${i + 1} locked`}
                 >
                   {i + 1}
                 </button>
