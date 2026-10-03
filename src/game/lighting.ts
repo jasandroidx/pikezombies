@@ -8,26 +8,63 @@ interface LightSource {
   color?: string;
 }
 
+interface FogParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  alpha: number;
+  canvas: HTMLCanvasElement;
+}
+
 export class DynamicLighting {
   private darknessCanvas: HTMLCanvasElement;
   private darknessCtx: CanvasRenderingContext2D;
-  private fogParticles: { x: number; y: number; vx: number; vy: number; radius: number; alpha: number }[] = [];
+  private fogParticles: FogParticle[] = [];
 
   constructor() {
     this.darknessCanvas = document.createElement('canvas');
     this.darknessCtx = this.darknessCanvas.getContext('2d')!;
 
-    // Drifting Patoka fog
+    // Drifting Patoka fog - pre-render particle textures to eliminate per-frame CanvasGradient allocations
     for (let i = 0; i < 40; i++) {
+      const radius = 120 + Math.random() * 160;
+      const alpha = 0.04 + Math.random() * 0.06;
       this.fogParticles.push({
         x: Math.random() * 2500,
         y: Math.random() * 2000,
         vx: 0.15 + Math.random() * 0.25,
         vy: 0.05 + Math.random() * 0.1,
-        radius: 120 + Math.random() * 160,
-        alpha: 0.04 + Math.random() * 0.06,
+        radius,
+        alpha,
+        canvas: this.createFogParticleCanvas(radius, alpha),
       });
     }
+  }
+
+  /**
+   * Pre-renders a fog particle radial gradient onto an offscreen canvas.
+   * This avoids allocating CanvasGradient objects and parsing CSS color strings inside the 60 FPS render loop.
+   */
+  private createFogParticleCanvas(radius: number, alpha: number): HTMLCanvasElement {
+    const canvas = document.createElement('canvas');
+    const size = Math.ceil(radius * 2);
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      const fogGrad = ctx.createRadialGradient(radius, radius, 0, radius, radius, radius);
+      fogGrad.addColorStop(0, `rgba(168, 176, 142, ${alpha * 1.35})`);
+      fogGrad.addColorStop(0.6, `rgba(120, 132, 108, ${alpha * 0.7})`);
+      fogGrad.addColorStop(1, 'rgba(90, 100, 80, 0)');
+
+      ctx.fillStyle = fogGrad;
+      ctx.beginPath();
+      ctx.arc(radius, radius, radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    return canvas;
   }
 
   public renderLighting(
@@ -58,9 +95,9 @@ export class DynamicLighting {
 
     // 1. Belt lantern — always-on disc so the hunter never vanishes
     const auraGrad = dCtx.createRadialGradient(player.x, player.y, 8, player.x, player.y, 128);
-    auraGrad.addColorStop(0, "rgba(0, 0, 0, 1.0)");
-    auraGrad.addColorStop(0.45, "rgba(0, 0, 0, 0.82)");
-    auraGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+    auraGrad.addColorStop(0, 'rgba(0, 0, 0, 1.0)');
+    auraGrad.addColorStop(0.45, 'rgba(0, 0, 0, 0.82)');
+    auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
     dCtx.fillStyle = auraGrad;
     dCtx.beginPath();
     dCtx.arc(player.x, player.y, 128, 0, Math.PI * 2);
@@ -145,24 +182,16 @@ export class DynamicLighting {
     this.renderFog(targetCtx, width, height);
   }
 
+  // Performance Optimization: Uses pre-rendered offscreen canvases for fog particles
+  // to avoid calling createRadialGradient and parsing color stop strings 40x per frame at 60 FPS.
   private renderFog(ctx: CanvasRenderingContext2D, width: number, height: number) {
-    ctx.save();
     for (const p of this.fogParticles) {
       p.x += p.vx;
       p.y += p.vy;
       if (p.x > width + p.radius) p.x = -p.radius;
       if (p.y > height + p.radius) p.y = -p.radius;
 
-      const fogGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-      fogGrad.addColorStop(0, `rgba(168, 176, 142, ${p.alpha * 1.35})`);
-      fogGrad.addColorStop(0.6, `rgba(120, 132, 108, ${p.alpha * 0.7})`);
-      fogGrad.addColorStop(1, "rgba(90, 100, 80, 0)");
-
-      ctx.fillStyle = fogGrad;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.drawImage(p.canvas, p.x - p.radius, p.y - p.radius);
     }
-    ctx.restore();
   }
 }
