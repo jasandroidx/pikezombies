@@ -98,7 +98,7 @@ export function GameOverModal({
             id="restart-run"
             type="button"
             onClick={onRestart}
-            className="flex flex-1 items-center justify-center gap-2 rounded border border-accent bg-surface-2 py-3 font-heading uppercase tracking-widest text-accent"
+            className="flex flex-1 items-center justify-center gap-2 rounded border border-accent bg-surface-2 py-3 font-heading uppercase tracking-widest text-accent focus-visible:ring-2 focus-visible:ring-accent outline-none"
           >
             <RotateCcw className="h-4 w-4" />
             Run it back
@@ -107,7 +107,7 @@ export function GameOverModal({
             id="home-btn"
             type="button"
             onClick={onHome}
-            className="flex flex-1 items-center justify-center gap-2 rounded border border-border bg-surface py-3 font-heading uppercase tracking-widest text-fg"
+            className="flex flex-1 items-center justify-center gap-2 rounded border border-border bg-surface py-3 font-heading uppercase tracking-widest text-fg focus-visible:ring-2 focus-visible:ring-accent outline-none"
           >
             <Home className="h-4 w-4" />
             County map
