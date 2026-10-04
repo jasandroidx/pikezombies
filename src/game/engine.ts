@@ -1919,29 +1919,51 @@ export class GameEngine {
 	}
 	renderEyeshine(e, camL, camT) {
 		const range = this.player.flashlightRange * 1.55;
+		const rangeSq = range * range;
+		const flashRange = this.player.flashlightRange;
+		const flashRangeSq = flashRange * flashRange;
 		const cone = 0.62;
+		const camR = camL + this.canvas.width + 40;
+		const camB = camT + this.canvas.height + 40;
+		const minCamL = camL - 40;
+		const minCamT = camT - 40;
+
+		e.save();
+		// Optimization: Set up fill styles and avoid expensive Canvas2D shadowBlur filter stalls inside hot loop
 		for (const z of this.zombies) {
+			// Early viewport culling check
+			if (z.x < minCamL || z.x > camR || z.y < minCamT || z.y > camB) continue;
+
 			const dx = z.x - this.player.x, dy = z.y - this.player.y;
-			const dist = Math.hypot(dx, dy);
-			if (dist < 40 || dist > range) continue;
+			const distSq = dx * dx + dy * dy;
+			if (distSq < 1600 || distSq > rangeSq) continue;
+
+			const dist = Math.sqrt(distSq);
 			const ang = Math.atan2(dy, dx);
 			let da = ang - this.player.flashlightAngle;
 			while (da > Math.PI) da -= Math.PI * 2;
 			while (da < -Math.PI) da += Math.PI * 2;
-			const inCone = Math.abs(da) < cone && dist < this.player.flashlightRange;
+			const inCone = Math.abs(da) < cone && distSq < flashRangeSq;
 			if (inCone && dist < 220) continue;
+
 			const sx = z.x - camL, sy = z.y - camT;
 			const glow = 3.4 + Math.sin(this.simTime * 8 + z.x) * 1.2;
-			e.save();
+
+			// Outer subtle glow halo (replaces expensive shadowBlur)
+			e.fillStyle = "rgba(225, 29, 46, 0.25)";
+			e.beginPath();
+			e.arc(sx - 5, sy - 6, glow * 1.1, 0, Math.PI * 2);
+			e.arc(sx + 5, sy - 6, glow * 1.1, 0, Math.PI * 2);
+			e.fill();
+
+			// Inner intense eyeshine dot
 			e.fillStyle = "rgba(225, 29, 46, 0.92)";
-			e.shadowColor = "#e11d2e";
-			e.shadowBlur = 12;
 			e.beginPath();
 			e.arc(sx - 5, sy - 6, glow * 0.42, 0, Math.PI * 2);
 			e.arc(sx + 5, sy - 6, glow * 0.42, 0, Math.PI * 2);
 			e.fill();
-			e.restore();
 		}
+		e.restore();
 	}
 	renderCompass(e, w, h) {
 		const cx = w / 2, cy = 26;
