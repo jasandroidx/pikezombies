@@ -8,24 +8,63 @@ interface LightSource {
   color?: string;
 }
 
+interface FogParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  alpha: number;
+  // Pre-rendered offscreen canvas sprite to avoid per-frame radial gradient allocations
+  sprite?: HTMLCanvasElement;
+}
+
 export class DynamicLighting {
-  private darknessCanvas: HTMLCanvasElement;
-  private darknessCtx: CanvasRenderingContext2D;
-  private fogParticles: { x: number; y: number; vx: number; vy: number; radius: number; alpha: number }[] = [];
+  private darknessCanvas: HTMLCanvasElement | null = null;
+  private darknessCtx: CanvasRenderingContext2D | null = null;
+  private fogParticles: FogParticle[] = [];
 
   constructor() {
-    this.darknessCanvas = document.createElement('canvas');
-    this.darknessCtx = this.darknessCanvas.getContext('2d')!;
+    if (typeof document !== 'undefined') {
+      this.darknessCanvas = document.createElement('canvas');
+      this.darknessCtx = this.darknessCanvas.getContext('2d');
+    }
 
     // Drifting Patoka fog
     for (let i = 0; i < 40; i++) {
+      const radius = 120 + Math.random() * 160;
+      const alpha = 0.04 + Math.random() * 0.06;
+
+      // OPTIMIZATION: Pre-render individual fog particle sprite onto an offscreen canvas.
+      // This eliminates 40 `createRadialGradient` calls, 120 `addColorStop` calls, and 120
+      // string allocations per frame at 60 FPS in the main render loop.
+      let sprite: HTMLCanvasElement | undefined;
+      if (typeof document !== 'undefined') {
+        sprite = document.createElement('canvas');
+        const size = Math.ceil(radius * 2);
+        sprite.width = size;
+        sprite.height = size;
+        const sCtx = sprite.getContext('2d');
+        if (sCtx) {
+          const fogGrad = sCtx.createRadialGradient(radius, radius, 0, radius, radius, radius);
+          fogGrad.addColorStop(0, `rgba(168, 176, 142, ${alpha * 1.35})`);
+          fogGrad.addColorStop(0.6, `rgba(120, 132, 108, ${alpha * 0.7})`);
+          fogGrad.addColorStop(1, 'rgba(90, 100, 80, 0)');
+          sCtx.fillStyle = fogGrad;
+          sCtx.beginPath();
+          sCtx.arc(radius, radius, radius, 0, Math.PI * 2);
+          sCtx.fill();
+        }
+      }
+
       this.fogParticles.push({
         x: Math.random() * 2500,
         y: Math.random() * 2000,
         vx: 0.15 + Math.random() * 0.25,
         vy: 0.05 + Math.random() * 0.1,
-        radius: 120 + Math.random() * 160,
-        alpha: 0.04 + Math.random() * 0.06,
+        radius,
+        alpha,
+        sprite,
       });
     }
   }
@@ -40,12 +79,20 @@ export class DynamicLighting {
     firePuddles: FirePuddle[],
     staticLights: LightSource[]
   ) {
+    if (typeof document === 'undefined') return;
+
+    if (!this.darknessCanvas) {
+      this.darknessCanvas = document.createElement('canvas');
+      this.darknessCtx = this.darknessCanvas.getContext('2d');
+    }
     if (this.darknessCanvas.width !== width || this.darknessCanvas.height !== height) {
       this.darknessCanvas.width = width;
       this.darknessCanvas.height = height;
     }
 
     const dCtx = this.darknessCtx;
+    if (!dCtx) return;
+
     dCtx.clearRect(0, 0, width, height);
 
     // Fill with dirty-olive darkness — never a black sheet
@@ -145,24 +192,20 @@ export class DynamicLighting {
     this.renderFog(targetCtx, width, height);
   }
 
+  /**
+   * Renders drifting fog particles onto target canvas using fast pre-rendered sprites.
+   * Eliminates 40 radial gradient instantiations and 120 string allocations per frame.
+   */
   private renderFog(ctx: CanvasRenderingContext2D, width: number, height: number) {
-    ctx.save();
     for (const p of this.fogParticles) {
       p.x += p.vx;
       p.y += p.vy;
       if (p.x > width + p.radius) p.x = -p.radius;
       if (p.y > height + p.radius) p.y = -p.radius;
 
-      const fogGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-      fogGrad.addColorStop(0, `rgba(168, 176, 142, ${p.alpha * 1.35})`);
-      fogGrad.addColorStop(0.6, `rgba(120, 132, 108, ${p.alpha * 0.7})`);
-      fogGrad.addColorStop(1, "rgba(90, 100, 80, 0)");
-
-      ctx.fillStyle = fogGrad;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fill();
+      if (p.sprite) {
+        ctx.drawImage(p.sprite, p.x - p.radius, p.y - p.radius);
+      }
     }
-    ctx.restore();
   }
 }
