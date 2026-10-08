@@ -1909,13 +1909,35 @@ export class GameEngine {
 		const camT = this.camY - this.canvas.height / 2 - 80;
 		const camR = camL + this.canvas.width + 160;
 		const camB = camT + this.canvas.height + 160;
-		const elites = this.zombies.filter((t) => t.x >= camL && t.x <= camR && t.y >= camT && t.y <= camB && (t.type === "sprinter" || t.type === "miner_brute" || t.type === "bloater_spitter" || t.type === "behemoth"));
-		if (!elites.length) return;
-		elites.sort((a, b) => Math.hypot(a.x - this.player.x, a.y - this.player.y) - Math.hypot(b.x - this.player.x, b.y - this.player.y));
-		const t = elites[0];
-		const label = ZOMBIE_LABELS[t.type] || "WILD";
-		const labelSize = t.type === "behemoth" ? 26 : 18;
-		drawWildLabel(e, label, t.x, t.y - t.radius - 20, labelSize, this.simTime);
+
+		// Performance Optimization: Replace per-frame array allocation (.filter()) and O(N log N) sort
+		// with a single-pass O(N) search for the nearest visible elite zombie using squared distance.
+		let nearestElite = null;
+		let minDistSq = Infinity;
+		const px = this.player.x;
+		const py = this.player.y;
+
+		for (let i = 0; i < this.zombies.length; i++) {
+			const z = this.zombies[i];
+			if (
+				z.x >= camL && z.x <= camR && z.y >= camT && z.y <= camB &&
+				(z.type === "sprinter" || z.type === "miner_brute" || z.type === "bloater_spitter" || z.type === "behemoth")
+			) {
+				const dx = z.x - px;
+				const dy = z.y - py;
+				const distSq = dx * dx + dy * dy;
+				if (distSq < minDistSq) {
+					minDistSq = distSq;
+					nearestElite = z;
+				}
+			}
+		}
+
+		if (!nearestElite) return;
+
+		const label = ZOMBIE_LABELS[nearestElite.type] || "WILD";
+		const labelSize = nearestElite.type === "behemoth" ? 26 : 18;
+		drawWildLabel(e, label, nearestElite.x, nearestElite.y - nearestElite.radius - 20, labelSize, this.simTime);
 	}
 	renderEyeshine(e, camL, camT) {
 		const range = this.player.flashlightRange * 1.55;
