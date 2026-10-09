@@ -102,8 +102,9 @@ export function StartScreen({ onStartGame, isMuted, onToggleMute }: StartScreenP
               <button
                 key={d.label}
                 type="button"
+                aria-pressed={difficulty === d.n}
                 onClick={() => setDifficulty(d.n)}
-                className={`flex-1 rounded border px-2 py-2 font-mono text-[11px] uppercase tracking-widest ${
+                className={`flex-1 rounded border px-2 py-2 font-mono text-[11px] uppercase tracking-widest focus-visible:ring-2 focus-visible:ring-accent outline-none ${
                   difficulty === d.n ? "border-accent bg-surface-2 text-accent" : "border-border bg-surface text-muted"
                 }`}
               >
@@ -201,9 +202,12 @@ function CountyMap({
       <text x="70" y="54" fill="#8a8175" fontSize="3.2" fontFamily="IBM Plex Mono">
         Patoka
       </text>
-      {nodes.map((n, i) => {
-        const prev = nodes[Math.max(0, i - 1)];
+      {nodes.map((n) => {
         const inOrder = OUTBREAK_ORDER.indexOf(n.id as (typeof OUTBREAK_ORDER)[number]);
+        const isSelected = selected === n.id;
+        const isCleared = cleared.includes(n.id);
+        const locationStatus = isCleared ? "Cleared" : isSelected ? "Selected" : "Available";
+
         return (
           <g key={n.id}>
             {inOrder > 0 && (
@@ -217,26 +221,37 @@ function CountyMap({
                 strokeDasharray="1.5 1"
               />
             )}
-            <circle
-              cx={n.x}
-              cy={n.y}
-              r={selected === n.id ? 3.6 : 2.4}
-              fill={cleared.includes(n.id) ? "#d4a017" : selected === n.id ? "#c23b22" : "#8a8175"}
-              className="cursor-pointer"
+            <g
+              role="button"
+              tabIndex={0}
+              aria-label={`Select location: ${n.label} (${locationStatus})`}
+              aria-pressed={isSelected}
               onClick={() => onPick(n.id)}
-            />
-            <text
-              x={n.x + 4}
-              y={n.y + 1.2}
-              fill={selected === n.id ? "#e8e0d4" : "#8a8175"}
-              fontSize="3.4"
-              fontFamily="Oswald"
-              className="cursor-pointer"
-              onClick={() => onPick(n.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onPick(n.id);
+                }
+              }}
+              className="cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
-              {n.label}
-            </text>
-            <title>{prev.label}</title>
+              <circle
+                cx={n.x}
+                cy={n.y}
+                r={isSelected ? 3.6 : 2.4}
+                fill={isCleared ? "#d4a017" : isSelected ? "#c23b22" : "#8a8175"}
+              />
+              <text
+                x={n.x + 4}
+                y={n.y + 1.2}
+                fill={isSelected ? "#e8e0d4" : "#8a8175"}
+                fontSize="3.4"
+                fontFamily="Oswald"
+              >
+                {n.label}
+              </text>
+              <title>{`${n.label} (${locationStatus})`}</title>
+            </g>
           </g>
         );
       })}
