@@ -1,4 +1,4 @@
-import { Weapon, GameLocation, Perk } from "../types/game";
+import type { Weapon, GameLocation, Perk } from "../types/game.ts";
 
 export const INITIAL_WEAPONS: Weapon[] = [
   {

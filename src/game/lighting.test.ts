@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { DynamicLighting } from './lighting';
+import { DynamicLighting } from './lighting.ts';
 
 describe('DynamicLighting', () => {
   test('instantiates fog particles and renders without throwing', () => {
