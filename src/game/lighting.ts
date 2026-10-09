@@ -1,4 +1,4 @@
-import { FirePuddle } from '../types/game';
+import type { FirePuddle } from '../types/game.ts';
 
 interface LightSource {
   x: number;

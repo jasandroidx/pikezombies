@@ -1,4 +1,4 @@
-import { GameLocation, BloodDecal, Drop, FirePuddle, MapObstacle, ExplosiveBarrel, LoreNote, Barricade } from '../types/game';
+import type { GameLocation, BloodDecal, Drop, FirePuddle, MapObstacle, ExplosiveBarrel, LoreNote, Barricade } from '../types/game.ts';
 
 export function renderEnvironment(
   ctx: CanvasRenderingContext2D,

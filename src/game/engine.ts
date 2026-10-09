@@ -1,5 +1,5 @@
 // @ts-nocheck
-import {
+import type {
   Weapon,
   Zombie,
   Bullet,
@@ -20,14 +20,14 @@ import {
   EngineSnapshot,
   CellarHole,
   NoisePulse,
-} from "../types/game";
-import { INITIAL_WEAPONS, AVAILABLE_PERKS, GAME_LOCATIONS, BOARD_COST } from "./constants";
-import { soundEngine } from "../audio/soundEngine";
-import { renderEnvironment } from "./mapRenderer";
-import { DynamicLighting } from "./lighting";
-import { radioFor } from "./radio";
-import { drawSprite, drawWildLabel, loadArt, ZOMBIE_LABELS } from "./art";
-import { FlowField } from "./flowfield";
+} from "../types/game.ts";
+import { INITIAL_WEAPONS, AVAILABLE_PERKS, GAME_LOCATIONS, BOARD_COST } from "./constants.ts";
+import { soundEngine } from "../audio/soundEngine.ts";
+import { renderEnvironment } from "./mapRenderer.ts";
+import { DynamicLighting } from "./lighting.ts";
+import { radioFor } from "./radio.ts";
+import { drawSprite, drawWildLabel, loadArt, ZOMBIE_LABELS } from "./art.ts";
+import { FlowField } from "./flowfield.ts";
 
 declare global {
   interface Window {
@@ -1904,31 +1904,66 @@ export class GameEngine {
 			e.restore();
 		}
 	}
+	/**
+	 * Renders label over closest visible elite zombie.
+	 * OPTIMIZATION: Replaces .filter() array allocation and O(N log N) .sort() using Math.hypot with a single
+	 * O(N) pass using squared distance calculations. Eliminates per-frame garbage collection and Math.sqrt overhead.
+	 */
 	renderZombieLabels(e) {
 		const camL = this.camX - this.canvas.width / 2 - 80;
 		const camT = this.camY - this.canvas.height / 2 - 80;
 		const camR = camL + this.canvas.width + 160;
 		const camB = camT + this.canvas.height + 160;
-		const elites = this.zombies.filter((t) => t.x >= camL && t.x <= camR && t.y >= camT && t.y <= camB && (t.type === "sprinter" || t.type === "miner_brute" || t.type === "bloater_spitter" || t.type === "behemoth"));
-		if (!elites.length) return;
-		elites.sort((a, b) => Math.hypot(a.x - this.player.x, a.y - this.player.y) - Math.hypot(b.x - this.player.x, b.y - this.player.y));
-		const t = elites[0];
-		const label = ZOMBIE_LABELS[t.type] || "WILD";
-		const labelSize = t.type === "behemoth" ? 26 : 18;
-		drawWildLabel(e, label, t.x, t.y - t.radius - 20, labelSize, this.simTime);
+		const px = this.player.x;
+		const py = this.player.y;
+
+		let closest: (typeof this.zombies)[0] | null = null;
+		let minDistSq = Infinity;
+
+		for (let i = 0; i < this.zombies.length; i++) {
+			const z = this.zombies[i];
+			if (
+				z.x >= camL &&
+				z.x <= camR &&
+				z.y >= camT &&
+				z.y <= camB &&
+				(z.type === "sprinter" ||
+					z.type === "miner_brute" ||
+					z.type === "bloater_spitter" ||
+					z.type === "behemoth")
+			) {
+				const dx = z.x - px;
+				const dy = z.y - py;
+				const distSq = dx * dx + dy * dy;
+				if (distSq < minDistSq) {
+					minDistSq = distSq;
+					closest = z;
+				}
+			}
+		}
+
+		if (!closest) return;
+		const label = ZOMBIE_LABELS[closest.type] || "WILD";
+		const labelSize = closest.type === "behemoth" ? 26 : 18;
+		drawWildLabel(e, label, closest.x, closest.y - closest.radius - 20, labelSize, this.simTime);
 	}
 	renderEyeshine(e, camL, camT) {
 		const range = this.player.flashlightRange * 1.55;
+		const rangeSq = range * range;
 		const cone = 0.62;
-		for (const z of this.zombies) {
-			const dx = z.x - this.player.x, dy = z.y - this.player.y;
-			const dist = Math.hypot(dx, dy);
-			if (dist < 40 || dist > range) continue;
+		const px = this.player.x, py = this.player.y;
+		const flRange = this.player.flashlightRange;
+		for (let i = 0; i < this.zombies.length; i++) {
+			const z = this.zombies[i];
+			const dx = z.x - px, dy = z.y - py;
+			const distSq = dx * dx + dy * dy;
+			if (distSq < 1600 || distSq > rangeSq) continue;
+			const dist = Math.sqrt(distSq);
 			const ang = Math.atan2(dy, dx);
 			let da = ang - this.player.flashlightAngle;
 			while (da > Math.PI) da -= Math.PI * 2;
 			while (da < -Math.PI) da += Math.PI * 2;
-			const inCone = Math.abs(da) < cone && dist < this.player.flashlightRange;
+			const inCone = Math.abs(da) < cone && dist < flRange;
 			if (inCone && dist < 220) continue;
 			const sx = z.x - camL, sy = z.y - camT;
 			const glow = 3.4 + Math.sin(this.simTime * 8 + z.x) * 1.2;
@@ -1957,10 +1992,13 @@ export class GameEngine {
 		if (loc.lantern) ticks.push({ x: loc.lantern.x, y: loc.lantern.y, color: "#d4a017" });
 		if (loc.extract) ticks.push({ x: loc.extract.x, y: loc.extract.y, color: "#d4a017" });
 		if (loc.bell && this.bellReady) ticks.push({ x: loc.bell.x, y: loc.bell.y, color: "#d4a017" });
-		let nearest = null, nd = 1e9;
-		for (const z of this.zombies) {
-			const d = Math.hypot(z.x - this.player.x, z.y - this.player.y);
-			if (d < nd) { nd = d; nearest = z; }
+		let nearest = null, minSq = 1e18;
+		const px = this.player.x, py = this.player.y;
+		for (let i = 0; i < this.zombies.length; i++) {
+			const z = this.zombies[i];
+			const dx = z.x - px, dy = z.y - py;
+			const distSq = dx * dx + dy * dy;
+			if (distSq < minSq) { minSq = distSq; nearest = z; }
 		}
 		if (nearest) ticks.push({ x: nearest.x, y: nearest.y, color: "#c23b22" });
 		for (const t of ticks) {
@@ -2051,7 +2089,23 @@ export class GameEngine {
 		}
 		for (let t of this.acidSpits) e.fillStyle = `#84cc16`, e.beginPath(), e.arc(t.x, t.y, t.radius, 0, Math.PI * 2), e.fill();
 	}
+	/**
+	 * Renders active particles.
+	 * OPTIMIZATION: Hoists canvas state save/restore outside the loop and uses indexed iteration
+	 * to eliminate hundreds of save/restore stack operations and iterator allocations per frame at 60 FPS.
+	 */
 	renderParticles(e) {
-		for (let t of this.particles) e.save(), e.globalAlpha = t.alpha, e.fillStyle = t.color, e.beginPath(), e.arc(t.x, t.y, t.size, 0, Math.PI * 2), e.fill(), e.restore();
+		const len = this.particles.length;
+		if (len === 0) return;
+		e.save();
+		for (let i = 0; i < len; i++) {
+			const t = this.particles[i];
+			e.globalAlpha = t.alpha;
+			e.fillStyle = t.color;
+			e.beginPath();
+			e.arc(t.x, t.y, t.size, 0, Math.PI * 2);
+			e.fill();
+		}
+		e.restore();
 	}
 }
