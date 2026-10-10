@@ -22,12 +22,32 @@ interface FogParticle {
 export class DynamicLighting {
   private darknessCanvas: HTMLCanvasElement | null = null;
   private darknessCtx: CanvasRenderingContext2D | null = null;
+  private auraCanvas: HTMLCanvasElement | null = null;
+  private coneCache = new Map<number, HTMLCanvasElement>();
+  private lightCache = new Map<string, HTMLCanvasElement>();
   private fogParticles: FogParticle[] = [];
 
   constructor() {
     if (typeof document !== 'undefined') {
       this.darknessCanvas = document.createElement('canvas');
       this.darknessCtx = this.darknessCanvas.getContext('2d');
+
+      // OPTIMIZATION: Pre-render belt lantern aura sprite (radius 128) onto an offscreen canvas.
+      // Eliminates 1 `createRadialGradient` call and 3 `addColorStop` string allocations per frame.
+      this.auraCanvas = document.createElement('canvas');
+      this.auraCanvas.width = 256;
+      this.auraCanvas.height = 256;
+      const aCtx = this.auraCanvas.getContext('2d');
+      if (aCtx) {
+        const auraGrad = aCtx.createRadialGradient(128, 128, 8, 128, 128, 128);
+        auraGrad.addColorStop(0, 'rgba(0, 0, 0, 1.0)');
+        auraGrad.addColorStop(0.45, 'rgba(0, 0, 0, 0.82)');
+        auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        aCtx.fillStyle = auraGrad;
+        aCtx.beginPath();
+        aCtx.arc(128, 128, 128, 0, Math.PI * 2);
+        aCtx.fill();
+      }
     }
 
     // Drifting Patoka fog
@@ -103,39 +123,23 @@ export class DynamicLighting {
     // Carve out light using 'destination-out'
     dCtx.globalCompositeOperation = 'destination-out';
 
-    // 1. Belt lantern — always-on disc so the hunter never vanishes
-    const auraGrad = dCtx.createRadialGradient(player.x, player.y, 8, player.x, player.y, 128);
-    auraGrad.addColorStop(0, "rgba(0, 0, 0, 1.0)");
-    auraGrad.addColorStop(0.45, "rgba(0, 0, 0, 0.82)");
-    auraGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
-    dCtx.fillStyle = auraGrad;
-    dCtx.beginPath();
-    dCtx.arc(player.x, player.y, 128, 0, Math.PI * 2);
-    dCtx.fill();
+    // 1. Belt lantern — always-on disc so the hunter never vanishes (using pre-rendered sprite)
+    if (this.auraCanvas) {
+      dCtx.drawImage(this.auraCanvas, player.x - 128, player.y - 128);
+    }
 
-    // 2. High-Beam Flashlight Cone
+    // 2. High-Beam Flashlight Cone (using cached offscreen cone sprite)
     const fRange = player.flashlightRange;
     const fAngle = player.flashlightAngle;
-    const fSpread = 0.55; // cone angle span in radians
+    const coneSprite = this.getFlashlightConeSprite(fRange);
 
-    dCtx.save();
-    dCtx.translate(player.x, player.y);
-    dCtx.rotate(fAngle);
-
-    const coneGrad = dCtx.createRadialGradient(0, 0, 20, 0, 0, fRange);
-    coneGrad.addColorStop(0, 'rgba(0, 0, 0, 1.0)');
-    coneGrad.addColorStop(0.65, 'rgba(0, 0, 0, 0.85)');
-    coneGrad.addColorStop(0.9, 'rgba(0, 0, 0, 0.45)');
-    coneGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
-    dCtx.fillStyle = coneGrad;
-    dCtx.beginPath();
-    dCtx.moveTo(0, 0);
-    dCtx.arc(0, 0, fRange, -fSpread, fSpread);
-    dCtx.closePath();
-    dCtx.fill();
-
-    dCtx.restore();
+    if (coneSprite) {
+      dCtx.save();
+      dCtx.translate(player.x, player.y);
+      dCtx.rotate(fAngle);
+      dCtx.drawImage(coneSprite, 0, -fRange);
+      dCtx.restore();
+    }
 
     // 3. Muzzle Flash (illuminates surroundings on gunshot)
     if (muzzleFlashTimer > 0) {
@@ -171,15 +175,12 @@ export class DynamicLighting {
       dCtx.fill();
     }
 
-    // 5. Static environmental lights (cabin windows, lanterns)
+    // 5. Static environmental lights (cabin windows, lanterns) - cached by radius & intensity
     for (const light of staticLights) {
-      const lGrad = dCtx.createRadialGradient(light.x, light.y, 5, light.x, light.y, light.radius);
-      lGrad.addColorStop(0, `rgba(0, 0, 0, ${light.intensity})`);
-      lGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      dCtx.fillStyle = lGrad;
-      dCtx.beginPath();
-      dCtx.arc(light.x, light.y, light.radius, 0, Math.PI * 2);
-      dCtx.fill();
+      const sprite = this.getStaticLightSprite(light.radius, light.intensity);
+      if (sprite) {
+        dCtx.drawImage(sprite, light.x - light.radius, light.y - light.radius);
+      }
     }
 
     // Reset composite operation
@@ -190,6 +191,66 @@ export class DynamicLighting {
 
     // Render Drifting Fog Clouds
     this.renderFog(targetCtx, width, height);
+  }
+
+  /**
+   * Returns a cached offscreen canvas containing a pre-rendered flashlight cone sprite for a given range.
+   * Prevents creating radial gradient objects and color string allocations every frame at 60 FPS.
+   */
+  private getFlashlightConeSprite(range: number): HTMLCanvasElement | null {
+    if (typeof document === 'undefined') return null;
+    let sprite = this.coneCache.get(range);
+    if (!sprite) {
+      sprite = document.createElement('canvas');
+      const size = Math.ceil(range * 2);
+      sprite.width = Math.ceil(range);
+      sprite.height = size;
+      const sCtx = sprite.getContext('2d');
+      if (sCtx) {
+        const fSpread = 0.55;
+        const coneGrad = sCtx.createRadialGradient(0, range, 20, 0, range, range);
+        coneGrad.addColorStop(0, 'rgba(0, 0, 0, 1.0)');
+        coneGrad.addColorStop(0.65, 'rgba(0, 0, 0, 0.85)');
+        coneGrad.addColorStop(0.9, 'rgba(0, 0, 0, 0.45)');
+        coneGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        sCtx.fillStyle = coneGrad;
+        sCtx.beginPath();
+        sCtx.moveTo(0, range);
+        sCtx.arc(0, range, range, -fSpread, fSpread);
+        sCtx.closePath();
+        sCtx.fill();
+      }
+      this.coneCache.set(range, sprite);
+    }
+    return sprite;
+  }
+
+  /**
+   * Returns a cached offscreen canvas containing a pre-rendered static light mask for a given radius and intensity.
+   */
+  private getStaticLightSprite(radius: number, intensity: number): HTMLCanvasElement | null {
+    if (typeof document === 'undefined') return null;
+    const key = `${radius}_${intensity}`;
+    let sprite = this.lightCache.get(key);
+    if (!sprite) {
+      sprite = document.createElement('canvas');
+      const size = Math.ceil(radius * 2);
+      sprite.width = size;
+      sprite.height = size;
+      const sCtx = sprite.getContext('2d');
+      if (sCtx) {
+        const lGrad = sCtx.createRadialGradient(radius, radius, 5, radius, radius, radius);
+        lGrad.addColorStop(0, `rgba(0, 0, 0, ${intensity})`);
+        lGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        sCtx.fillStyle = lGrad;
+        sCtx.beginPath();
+        sCtx.arc(radius, radius, radius, 0, Math.PI * 2);
+        sCtx.fill();
+      }
+      this.lightCache.set(key, sprite);
+    }
+    return sprite;
   }
 
   /**
