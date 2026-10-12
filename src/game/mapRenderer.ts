@@ -1,5 +1,58 @@
 import { GameLocation, BloodDecal, Drop, FirePuddle, MapObstacle, ExplosiveBarrel, LoreNote, Barricade } from '../types/game';
 
+// Cache for pre-rendered tree obstacle offscreen canvas sprites by radius.
+const treeSpriteCache = new Map<number, HTMLCanvasElement>();
+
+/**
+ * Pre-renders a tree sprite onto an offscreen canvas.
+ * Avoids per-frame overhead of 4 separate arc and fill path rendering calls per tree at 60 FPS.
+ */
+function getOrCreateTreeSprite(radius: number): HTMLCanvasElement | null {
+  if (typeof document === 'undefined') return null;
+
+  const cached = treeSpriteCache.get(radius);
+  if (cached) return cached;
+
+  const canvas = document.createElement('canvas');
+  // Account for shadow offsets (+4, +6) and shadow radius expansion (+2)
+  const padding = 16;
+  const size = Math.ceil((radius + padding) * 2);
+  canvas.width = size;
+  canvas.height = size;
+
+  const sCtx = canvas.getContext('2d');
+  if (!sCtx) return null;
+
+  const center = size / 2;
+
+  // Outer foliage shadow
+  sCtx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+  sCtx.beginPath();
+  sCtx.arc(center + 4, center + 6, radius + 2, 0, Math.PI * 2);
+  sCtx.fill();
+
+  // Outer dark green pine
+  sCtx.fillStyle = '#142817';
+  sCtx.beginPath();
+  sCtx.arc(center, center, radius, 0, Math.PI * 2);
+  sCtx.fill();
+
+  // Inner foliage layer
+  sCtx.fillStyle = '#1c3d22';
+  sCtx.beginPath();
+  sCtx.arc(center - 2, center - 2, radius * 0.72, 0, Math.PI * 2);
+  sCtx.fill();
+
+  // Tree trunk center
+  sCtx.fillStyle = '#3c2718';
+  sCtx.beginPath();
+  sCtx.arc(center, center, 7, 0, Math.PI * 2);
+  sCtx.fill();
+
+  treeSpriteCache.set(radius, canvas);
+  return canvas;
+}
+
 export function renderEnvironment(
   ctx: CanvasRenderingContext2D,
   location: GameLocation,
@@ -372,29 +425,34 @@ function renderObstacle(ctx: CanvasRenderingContext2D, obs: MapObstacle) {
       const cx = obs.x + radius;
       const cy = obs.y + radius;
 
-      // Outer foliage shadow
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-      ctx.beginPath();
-      ctx.arc(cx + 4, cy + 6, radius + 2, 0, Math.PI * 2);
-      ctx.fill();
+      // OPTIMIZATION: Pre-render tree sprites onto offscreen canvases keyed by radius.
+      // Eliminates 4 arc/fill drawing path calls per tree per frame at 60 FPS.
+      const sprite = getOrCreateTreeSprite(radius);
+      if (sprite) {
+        // Center the sprite over (cx, cy)
+        ctx.drawImage(sprite, cx - sprite.width / 2, cy - sprite.height / 2);
+      } else {
+        // Fallback for SSR / non-browser environments
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.beginPath();
+        ctx.arc(cx + 4, cy + 6, radius + 2, 0, Math.PI * 2);
+        ctx.fill();
 
-      // Outer dark green pine
-      ctx.fillStyle = '#142817';
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-      ctx.fill();
+        ctx.fillStyle = '#142817';
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.fill();
 
-      // Inner foliage layer
-      ctx.fillStyle = '#1c3d22';
-      ctx.beginPath();
-      ctx.arc(cx - 2, cy - 2, radius * 0.72, 0, Math.PI * 2);
-      ctx.fill();
+        ctx.fillStyle = '#1c3d22';
+        ctx.beginPath();
+        ctx.arc(cx - 2, cy - 2, radius * 0.72, 0, Math.PI * 2);
+        ctx.fill();
 
-      // Tree trunk center
-      ctx.fillStyle = '#3c2718';
-      ctx.beginPath();
-      ctx.arc(cx, cy, 7, 0, Math.PI * 2);
-      ctx.fill();
+        ctx.fillStyle = '#3c2718';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+        ctx.fill();
+      }
       break;
     }
 
