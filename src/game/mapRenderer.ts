@@ -23,20 +23,20 @@ export function renderEnvironment(
   const endX = viewport.x + viewport.width;
   const endY = viewport.y + viewport.height;
 
+  // OPTIMIZATION: Batch ground grid line path segments into a single beginPath and stroke call.
+  // Eliminates ~40 canvas stroke draw calls per frame at 60 FPS.
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
   ctx.lineWidth = 1;
+  ctx.beginPath();
   for (let x = startX; x <= endX; x += tileSize) {
-    ctx.beginPath();
     ctx.moveTo(x, viewport.y);
     ctx.lineTo(x, viewport.y + viewport.height);
-    ctx.stroke();
   }
   for (let y = startY; y <= endY; y += tileSize) {
-    ctx.beginPath();
     ctx.moveTo(viewport.x, y);
     ctx.lineTo(viewport.x + viewport.width, y);
-    ctx.stroke();
   }
+  ctx.stroke();
 
   // Draw natural dirt patches and trails
   ctx.fillStyle = location.trail || '#26211a';
@@ -63,15 +63,16 @@ export function renderEnvironment(
     ctx.ellipse(0, 0, decal.radius, decal.radius * 0.65, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Spatter drops
+    // OPTIMIZATION: Batch all 4 spatter drop arcs into a single path and fill call per decal.
+    // Reduces fill calls from 4 to 1 per decal (saving up to 450 fill calls/frame for 150 decals).
     ctx.fillStyle = `rgba(90, 0, 0, ${decal.alpha * 0.8})`;
+    ctx.beginPath();
     for (let i = 0; i < 4; i++) {
       const angle = (i * Math.PI) / 2 + decal.rotation;
       const dist = decal.radius * 0.9;
-      ctx.beginPath();
       ctx.arc(Math.cos(angle) * dist, Math.sin(angle) * dist, decal.radius * 0.2, 0, Math.PI * 2);
-      ctx.fill();
     }
+    ctx.fill();
     ctx.restore();
   }
 

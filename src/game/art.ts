@@ -63,11 +63,17 @@ export function drawSprite(
 ) {
   const img = getSprite(id);
   if (!img) return false;
-  ctx.save();
-  if (flipX) ctx.scale(-1, 1);
-  if (hitFlash > 0) ctx.filter = "brightness(2.2) saturate(0.35)";
-  ctx.drawImage(img, -size / 2, -size / 2, size, size);
-  ctx.restore();
+  // OPTIMIZATION: Fast path when no scaling/flip or filter is needed.
+  // Eliminates save/restore context pushes & pops for all standard sprite rendering.
+  if (!flipX && hitFlash <= 0) {
+    ctx.drawImage(img, -size / 2, -size / 2, size, size);
+  } else {
+    ctx.save();
+    if (flipX) ctx.scale(-1, 1);
+    if (hitFlash > 0) ctx.filter = "brightness(2.2) saturate(0.35)";
+    ctx.drawImage(img, -size / 2, -size / 2, size, size);
+    ctx.restore();
+  }
   return true;
 }
 
