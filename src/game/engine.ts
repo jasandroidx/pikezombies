@@ -2052,6 +2052,15 @@ export class GameEngine {
 		for (let t of this.acidSpits) e.fillStyle = `#84cc16`, e.beginPath(), e.arc(t.x, t.y, t.radius, 0, Math.PI * 2), e.fill();
 	}
 	renderParticles(e) {
-		for (let t of this.particles) e.save(), e.globalAlpha = t.alpha, e.fillStyle = t.color, e.beginPath(), e.arc(t.x, t.y, t.size, 0, Math.PI * 2), e.fill(), e.restore();
+		// OPTIMIZATION: Set globalAlpha & fillStyle directly without save()/restore() per particle.
+		// Eliminates Canvas state push/pop stack overhead for dozens of particles every frame.
+		for (const t of this.particles) {
+			e.globalAlpha = t.alpha;
+			e.fillStyle = t.color;
+			e.beginPath();
+			e.arc(t.x, t.y, t.size, 0, Math.PI * 2);
+			e.fill();
+		}
+		e.globalAlpha = 1;
 	}
 }
