@@ -5,3 +5,7 @@
 ## 2025-05-18 - Pre-rendering Canvas Particle Sprites
 **Learning:** Re-creating Canvas `createRadialGradient` objects and formatting color stop `rgba(...)` strings inside 60 FPS particle animation render loops creates extreme GC allocation churn (2,400 gradient instantiations and 7,200 string allocations/sec for 40 particles). Pre-rendering particle textures once onto offscreen canvas elements and blitting via `ctx.drawImage()` eliminates allocation overhead entirely.
 **Action:** When rendering multi-particle lighting, fog, or visual effects in Canvas 2D loops, pre-render particle textures onto offscreen canvases during initialization and draw using `ctx.drawImage()`.
+
+## 2025-05-25 - Throttling React state callbacks in 60 FPS Canvas loops
+**Learning:** Firing React state update callbacks (`onStatsUpdate`) on every single frame inside a 60 FPS Canvas game loop causes 60 React component tree re-renders per second, creating massive JS CPU and DOM diffing overhead. Throttling UI state syncs to ~20 FPS (every 50ms) while triggering immediate updates on key events (damage, weapon swap) eliminates ~66% of React re-renders without reducing UI responsiveness.
+**Action:** In Canvas/WebGL game engines paired with React HUDs, throttle continuous state synchronization callbacks to ~20-30 FPS in the animation loop.
