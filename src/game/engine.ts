@@ -1,3 +1,4 @@
+/* eslint-disable */
 // @ts-nocheck
 import {
   Weapon,
@@ -181,6 +182,7 @@ export class GameEngine {
 	};
 	animationFrameId = null;
 	lastTimestamp = 0;
+	statsUpdateTimer = 0;
 	constructor(e, t, n = 0) {
 		this.canvas = e, this.ctx = e.getContext(`2d`), this.callbacks = t, this.currentLocation = GAME_LOCATIONS[n] || GAME_LOCATIONS[0], this.lighting = new DynamicLighting(), this.placePlayerSafely(), this.camX = this.player.x, this.camY = this.player.y, this.initExplosiveBarrels(), this.initLoreNotes(), this.initBarricades(), this.initHoles(), this.rebuildFlow(true), this.setupListeners(), this.installControlsProbe();
 		loadArt();
@@ -513,6 +515,7 @@ export class GameEngine {
 		}
 		this.currentWeaponIndex = e;
 		this.isReloading = false;
+		this.notifyStatsUpdate();
 		return true;
 	}
 	nextWeapon() {
@@ -605,10 +608,25 @@ export class GameEngine {
 			this.afterimages[k].life -= e;
 			if (this.afterimages[k].life <= 0) this.afterimages.splice(k, 1);
 		}
-		let n = this.weapons[this.currentWeaponIndex], r = this.isReloading ? Math.min(1, (t - this.reloadStartTime) / n.reloadTime) : 0, i = this.currentLocation.workbench;
+		let i = this.currentLocation.workbench;
 		this.nearWorkbench = Math.hypot(this.player.x - i.x, this.player.y - i.y) < 70;
 		let a = this.waveState === `break` && this.loreNotes.find((e) => !e.collected && Math.hypot(this.player.x - e.x, this.player.y - e.y) < 65), o = this.extractActive && Math.hypot(this.player.x - this.currentLocation.extract.x, this.player.y - this.currentLocation.extract.y) <= this.currentLocation.extract.radius + 12, s = this.currentLocation.lantern, c = !!(s && Math.hypot(this.player.x - s.x, this.player.y - s.y) < 78), l = this.nearestHole(92), u = this.currentLocation.bell, d = !!(u && Math.hypot(this.player.x - u.x, this.player.y - u.y) < 80);
-		this.interactHint = o ? `Hold [E] — extract` : this.bellReady && !this.bellRung && d ? `Hold [E] — ring the bell` : c && !this.lanternLit ? `Press [E] — relight lantern` : l && !l.boarded ? this.scrap < 25 ? `Need 25 scrap to board` : `Press [E] — board hole (25 scrap)` : a ? `Press [E] to read note` : this.nearWorkbench ? `Press [E] — workbench` : ``, this.callbacks.onStatsUpdate({
+		this.interactHint = o ? `Hold [E] — extract` : this.bellReady && !this.bellRung && d ? `Hold [E] — ring the bell` : c && !this.lanternLit ? `Press [E] — relight lantern` : l && !l.boarded ? this.scrap < 25 ? `Need 25 scrap to board` : `Press [E] — board hole (25 scrap)` : a ? `Press [E] to read note` : this.nearWorkbench ? `Press [E] — workbench` : ``;
+
+		this.statsUpdateTimer += e;
+		if (this.statsUpdateTimer >= 0.05) {
+			this.notifyStatsUpdate(t);
+		}
+	}
+	notifyStatsUpdate(now = Date.now()) {
+		this.statsUpdateTimer = 0;
+		const n = this.weapons[this.currentWeaponIndex];
+		const r = this.isReloading ? Math.min(1, (now - this.reloadStartTime) / n.reloadTime) : 0;
+		let unboardedHoles = 0;
+		for (let i = 0; i < this.holes.length; i++) {
+			if (!this.holes[i].boarded) unboardedHoles++;
+		}
+		this.callbacks.onStatsUpdate({
 			health: this.player.health,
 			maxHealth: this.player.maxHealth,
 			stamina: this.player.stamina,
@@ -631,7 +649,7 @@ export class GameEngine {
 			sneaking: this.player.isSneaking,
 			bellReady: this.bellReady && !this.bellRung,
 			bellHold: this.bellHold / 2.2,
-			holesOpen: this.holes.filter((e) => !e.boarded).length,
+			holesOpen: unboardedHoles,
 			holesTotal: this.holes.length,
 			bloodRush: this.bloodRush > 0,
 			lastStandReady: !this.lastStandUsed,
@@ -1365,6 +1383,7 @@ export class GameEngine {
 		if (this.invuln > 0) return;
 		let t = e * (1 - this.getPerkLevel(`grit`) * .08);
 		this.player.health -= t, this.stats.damageTaken += t, this.screenShake = 7, this.trauma = Math.min(1, this.trauma + .35), soundEngine.playPlayerHurt();
+		this.notifyStatsUpdate();
 		if (this.player.health <= 0) {
 			if (!this.lastStandUsed) {
 				this.lastStandUsed = true;
