@@ -1251,22 +1251,65 @@ export class GameEngine {
 				this.killZombie(r, n);
 				continue;
 			}
-			let i = this.player.x - r.x, a = this.player.y - r.y, o = Math.hypot(i, a);
+			// Performance Optimization: Use squared distance calculations instead of Math.hypot
+			// to avoid costly Math.sqrt CPU overhead every tick for each zombie.
+			let i = this.player.x - r.x, a = this.player.y - r.y;
+			let distSqPlayer = i * i + a * a;
 			r.hitFlash > 0 && (r.hitFlash -= e);
-			let s = Math.hypot(r.hearX - r.x, r.hearY - r.y), c = this.simTime < this.bellLureUntil && this.currentLocation.bell, l = r.type === `sprinter` ? 520 : r.type === `behemoth` ? 700 : r.type === `crawler` ? 260 : 340;
-			this.player.isSneaking && (l *= .6);
+
+			let hearDx = r.hearX - r.x, hearDy = r.hearY - r.y;
+			let distSqHear = hearDx * hearDx + hearDy * hearDy;
+
+			let c = this.simTime < this.bellLureUntil && this.currentLocation.bell;
+			let l = r.type === `sprinter` ? 520 : r.type === `behemoth` ? 700 : r.type === `crawler` ? 260 : 340;
+			if (this.player.isSneaking) l *= .6;
+
 			const lantern = this.currentLocation.lantern;
-			if (this.lanternLit && lantern && r.type === `shambler` && r.ai === `wander`) r.wanderAngle = Math.atan2(lantern.y - r.y, lantern.x - r.x) + (Math.random() - .5) * .7;
-			c && this.currentLocation.bell ? (r.hearX = this.currentLocation.bell.x, r.hearY = this.currentLocation.bell.y, r.ai = o <= r.radius + this.player.radius + 2 ? `attack` : `investigate`) : o < l ? r.ai = o <= r.radius + this.player.radius + 2 ? `attack` : `chase` : r.ai === `wander` && s > 40 && (r.hearX !== r.x || r.hearY !== r.y) && (r.ai = `investigate`), r.ai === `wander` ? (r.wanderAngle += (Math.random() - .5) * .8 * e, r.angle = r.wanderAngle) : r.ai === `investigate` ? (r.angle = Math.atan2(r.hearY - r.y, r.hearX - r.x), s < 28 && (r.ai = `wander`)) : r.angle = Math.atan2(a, i), r.type === `bloater_spitter` && (r.spitCooldown ||= 2500, r.spitCooldown -= e * 1e3, r.spitCooldown <= 0 && o < 450) && (r.spitCooldown = 3200, this.acidSpits.push({
-				id: Math.random().toString(),
-				x: r.x,
-				y: r.y,
-				vx: Math.cos(r.angle) * 7,
-				vy: Math.sin(r.angle) * 7,
-				radius: 7,
-				damage: 22,
-				remainingDistance: 450
-			}), soundEngine.playZombieHit(false));
+			if (this.lanternLit && lantern && r.type === `shambler` && r.ai === `wander`) {
+				r.wanderAngle = Math.atan2(lantern.y - r.y, lantern.x - r.x) + (Math.random() - .5) * .7;
+			}
+
+			let attackThreshold = r.radius + this.player.radius + 2;
+			let attackThresholdSq = attackThreshold * attackThreshold;
+
+			if (c && this.currentLocation.bell) {
+				r.hearX = this.currentLocation.bell.x;
+				r.hearY = this.currentLocation.bell.y;
+				r.ai = distSqPlayer <= attackThresholdSq ? `attack` : `investigate`;
+			} else if (distSqPlayer < l * l) {
+				r.ai = distSqPlayer <= attackThresholdSq ? `attack` : `chase`;
+			} else if (r.ai === `wander` && distSqHear > 1600 && (r.hearX !== r.x || r.hearY !== r.y)) { // 40^2 = 1600
+				r.ai = `investigate`;
+			}
+
+			if (r.ai === `wander`) {
+				r.wanderAngle += (Math.random() - .5) * .8 * e;
+				r.angle = r.wanderAngle;
+			} else if (r.ai === `investigate`) {
+				r.angle = Math.atan2(r.hearY - r.y, r.hearX - r.x);
+				if (distSqHear < 784) r.ai = `wander`; // 28^2 = 784
+			} else {
+				r.angle = Math.atan2(a, i);
+			}
+
+			if (r.type === `bloater_spitter`) {
+				r.spitCooldown ||= 2500;
+				r.spitCooldown -= e * 1e3;
+				if (r.spitCooldown <= 0 && distSqPlayer < 202500) { // 450^2 = 202500
+					r.spitCooldown = 3200;
+					this.acidSpits.push({
+						id: Math.random().toString(),
+						x: r.x,
+						y: r.y,
+						vx: Math.cos(r.angle) * 7,
+						vy: Math.sin(r.angle) * 7,
+						radius: 7,
+						damage: 22,
+						remainingDistance: 450
+					});
+					soundEngine.playZombieHit(false);
+				}
+			}
 			let u = r.speed;
 			r.type === `behemoth` && r.health < r.maxHealth * .4 && (u *= 1.4), r.ai === `wander` && (u *= .35), r.ai === `investigate` && (u *= .7);
 			if (r.stunUntil && this.simTime < r.stunUntil) u = 0;
@@ -1301,7 +1344,12 @@ export class GameEngine {
 					r.x += i / o * e, r.y += a / o * e;
 				}
 			}
-			o <= r.radius + this.player.radius && this.invuln <= 0 && t - r.lastAttackTime >= r.attackCooldown && (this.lastKiller = r.type, this.damagePlayer(r.damage), r.lastAttackTime = t);
+			let playerTouchDist = r.radius + this.player.radius;
+			if (distSqPlayer <= playerTouchDist * playerTouchDist && this.invuln <= 0 && t - r.lastAttackTime >= r.attackCooldown) {
+				this.lastKiller = r.type;
+				this.damagePlayer(r.damage);
+				r.lastAttackTime = t;
+			}
 		}
 	}
 	killZombie(e, t) {
