@@ -17,6 +17,8 @@ export function renderEnvironment(
   ctx.fillRect(viewport.x, viewport.y, viewport.width, viewport.height);
 
   // Subtle grid/gravel detail
+  // Performance optimization: Batch all line segments into a single path and call ctx.stroke() once
+  // instead of per line iteration, reducing canvas draw call overhead per frame.
   const tileSize = 80;
   const startX = Math.floor(viewport.x / tileSize) * tileSize;
   const startY = Math.floor(viewport.y / tileSize) * tileSize;
@@ -25,18 +27,16 @@ export function renderEnvironment(
 
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
   ctx.lineWidth = 1;
+  ctx.beginPath();
   for (let x = startX; x <= endX; x += tileSize) {
-    ctx.beginPath();
     ctx.moveTo(x, viewport.y);
     ctx.lineTo(x, viewport.y + viewport.height);
-    ctx.stroke();
   }
   for (let y = startY; y <= endY; y += tileSize) {
-    ctx.beginPath();
     ctx.moveTo(viewport.x, y);
     ctx.lineTo(viewport.x + viewport.width, y);
-    ctx.stroke();
   }
+  ctx.stroke();
 
   // Draw natural dirt patches and trails
   ctx.fillStyle = location.trail || '#26211a';
@@ -103,13 +103,35 @@ export function renderEnvironment(
     ctx.fill();
   }
 
+  // Performance optimization: Viewport frustum culling for map elements.
+  // Skip rendering off-screen obstacles, barricades, barrels, drops, and notes
+  // to avoid unnecessary canvas context state switches and draw calls.
+  const vLeft = viewport.x;
+  const vRight = viewport.x + viewport.width;
+  const vTop = viewport.y;
+  const vBottom = viewport.y + viewport.height;
+
   // Draw Map Obstacles
   for (const obs of location.obstacles) {
-    renderObstacle(ctx, obs);
+    if (
+      obs.x + obs.width + 50 >= vLeft &&
+      obs.x - 50 <= vRight &&
+      obs.y + obs.height + 50 >= vTop &&
+      obs.y - 50 <= vBottom
+    ) {
+      renderObstacle(ctx, obs);
+    }
   }
 
   for (const bar of barricades) {
-    renderBarricade(ctx, bar);
+    if (
+      bar.x + bar.width + 20 >= vLeft &&
+      bar.x - 20 <= vRight &&
+      bar.y + bar.height + 20 >= vTop &&
+      bar.y - 20 <= vBottom
+    ) {
+      renderBarricade(ctx, bar);
+    }
   }
 
   if (extractActive) {
@@ -118,18 +140,42 @@ export function renderEnvironment(
 
   // Draw Interactive Explosive Barrels
   for (const barrel of barrels) {
-    renderExplosiveBarrel(ctx, barrel, now);
+    const r = barrel.radius + 15;
+    if (
+      barrel.x + r >= vLeft &&
+      barrel.x - r <= vRight &&
+      barrel.y + r >= vTop &&
+      barrel.y - r <= vBottom
+    ) {
+      renderExplosiveBarrel(ctx, barrel, now);
+    }
   }
 
   // Draw Drops (Ammo, Moonshine, Scrap, Powerups)
   for (const drop of drops) {
-    renderDrop(ctx, drop, now);
+    const r = 25;
+    if (
+      drop.x + r >= vLeft &&
+      drop.x - r <= vRight &&
+      drop.y + r >= vTop &&
+      drop.y - r <= vBottom
+    ) {
+      renderDrop(ctx, drop, now);
+    }
   }
 
   // Draw Lore Notes on the ground
   for (const note of loreNotes) {
     if (!note.collected) {
-      renderLoreNote(ctx, note, now);
+      const r = 35;
+      if (
+        note.x + r >= vLeft &&
+        note.x - r <= vRight &&
+        note.y + r >= vTop &&
+        note.y - r <= vBottom
+      ) {
+        renderLoreNote(ctx, note, now);
+      }
     }
   }
 }
