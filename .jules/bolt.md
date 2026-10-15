@@ -5,3 +5,7 @@
 ## 2025-05-18 - Pre-rendering Canvas Particle Sprites
 **Learning:** Re-creating Canvas `createRadialGradient` objects and formatting color stop `rgba(...)` strings inside 60 FPS particle animation render loops creates extreme GC allocation churn (2,400 gradient instantiations and 7,200 string allocations/sec for 40 particles). Pre-rendering particle textures once onto offscreen canvas elements and blitting via `ctx.drawImage()` eliminates allocation overhead entirely.
 **Action:** When rendering multi-particle lighting, fog, or visual effects in Canvas 2D loops, pre-render particle textures onto offscreen canvases during initialization and draw using `ctx.drawImage()`.
+
+## 2025-05-20 - Out-parameter vector pattern for 60 FPS AI pathfinding
+**Learning:** Returning newly allocated vector objects `{ x, y }` inside per-entity 60 FPS update loops generates heavy GC pressure (~6,000 object allocations/second for 100 zombies). Providing an optional caller-owned `out` parameter allows hot loops to pass a reusable destination object, eliminating GC allocations while avoiding shared mutable state bugs.
+**Action:** When returning 2D/3D vectors or coordinates from hot game loop methods, accept an optional `out` parameter to allow callers to reuse destination objects safely.

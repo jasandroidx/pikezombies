@@ -99,7 +99,13 @@ export class FlowField {
     }
   }
 
-  dir(x: number, y: number): { x: number; y: number } | null {
+  /**
+   * Computes flow direction at (x, y).
+   * OPTIMIZATION: Accepts an optional caller-provided `out` vector object to populate.
+   * Passing a reusable caller-owned object eliminates ~6,000 temporary object allocations/second
+   * in 60 FPS update loops with 100 zombies while avoiding shared mutable state side-effects.
+   */
+  dir(x: number, y: number, out?: { x: number; y: number }): { x: number; y: number } | null {
     const C = this.cols;
     const R = this.rows;
     if (C < 2 || R < 2) return null;
@@ -128,6 +134,9 @@ export class FlowField {
     }
     if (!bx && !by) return null;
     const m = Math.hypot(bx, by) || 1;
-    return { x: bx / m, y: by / m };
+    const res = out || { x: 0, y: 0 };
+    res.x = bx / m;
+    res.y = by / m;
+    return res;
   }
 }
