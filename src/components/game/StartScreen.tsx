@@ -103,7 +103,9 @@ export function StartScreen({ onStartGame, isMuted, onToggleMute }: StartScreenP
                 key={d.label}
                 type="button"
                 onClick={() => setDifficulty(d.n)}
-                className={`flex-1 rounded border px-2 py-2 font-mono text-[11px] uppercase tracking-widest ${
+                aria-pressed={difficulty === d.n}
+                aria-label={`Difficulty: ${d.label}`}
+                className={`flex-1 rounded border px-2 py-2 font-mono text-[11px] uppercase tracking-widest focus-visible:ring-2 focus-visible:ring-accent outline-none ${
                   difficulty === d.n ? "border-accent bg-surface-2 text-accent" : "border-border bg-surface text-muted"
                 }`}
               >
@@ -116,7 +118,7 @@ export function StartScreen({ onStartGame, isMuted, onToggleMute }: StartScreenP
             id="start-outbreak"
             type="button"
             onClick={() => onStartGame(0, difficulty, "outbreak")}
-            className="flex items-center justify-center gap-2 rounded border border-primary bg-primary px-4 py-3 font-heading text-lg font-bold uppercase tracking-widest text-fg"
+            className="flex items-center justify-center gap-2 rounded border border-primary bg-primary px-4 py-3 font-heading text-lg font-bold uppercase tracking-widest text-fg focus-visible:ring-2 focus-visible:ring-accent outline-none"
           >
             <Skull className="h-5 w-5" />
             Outbreak night
@@ -125,7 +127,7 @@ export function StartScreen({ onStartGame, isMuted, onToggleMute }: StartScreenP
             id="start-survival"
             type="button"
             onClick={() => onStartGame(selectedLocation, difficulty, "survival")}
-            className="flex items-center justify-center gap-2 rounded border border-accent bg-surface-2 px-4 py-3 font-heading text-lg font-bold uppercase tracking-widest text-accent"
+            className="flex items-center justify-center gap-2 rounded border border-accent bg-surface-2 px-4 py-3 font-heading text-lg font-bold uppercase tracking-widest text-accent focus-visible:ring-2 focus-visible:ring-accent outline-none"
           >
             <Play className="h-5 w-5" />
             Survival · this place
@@ -201,11 +203,26 @@ function CountyMap({
       <text x="70" y="54" fill="#8a8175" fontSize="3.2" fontFamily="IBM Plex Mono">
         Patoka
       </text>
-      {nodes.map((n, i) => {
-        const prev = nodes[Math.max(0, i - 1)];
+      {nodes.map((n) => {
         const inOrder = OUTBREAK_ORDER.indexOf(n.id as (typeof OUTBREAK_ORDER)[number]);
+        const isSelected = selected === n.id;
+        const isCleared = cleared.includes(n.id);
         return (
-          <g key={n.id}>
+          <g
+            key={n.id}
+            role="button"
+            tabIndex={0}
+            aria-label={`Location: ${n.label}${isCleared ? " (Cleared)" : ""}`}
+            aria-pressed={isSelected}
+            onClick={() => onPick(n.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onPick(n.id);
+              }
+            }}
+            className="group cursor-pointer outline-none"
+          >
             {inOrder > 0 && (
               <line
                 x1={nodes.find((x) => x.id === OUTBREAK_ORDER[inOrder - 1])?.x}
@@ -220,23 +237,21 @@ function CountyMap({
             <circle
               cx={n.x}
               cy={n.y}
-              r={selected === n.id ? 3.6 : 2.4}
-              fill={cleared.includes(n.id) ? "#d4a017" : selected === n.id ? "#c23b22" : "#8a8175"}
-              className="cursor-pointer"
-              onClick={() => onPick(n.id)}
+              r={isSelected ? 3.6 : 2.4}
+              fill={isCleared ? "#d4a017" : isSelected ? "#c23b22" : "#8a8175"}
+              className="group-focus-visible:stroke-accent group-focus-visible:stroke-2"
             />
             <text
               x={n.x + 4}
               y={n.y + 1.2}
-              fill={selected === n.id ? "#e8e0d4" : "#8a8175"}
+              fill={isSelected ? "#e8e0d4" : "#8a8175"}
               fontSize="3.4"
               fontFamily="Oswald"
-              className="cursor-pointer"
-              onClick={() => onPick(n.id)}
+              className="group-focus-visible:fill-accent"
             >
               {n.label}
             </text>
-            <title>{prev.label}</title>
+            <title>{n.label}</title>
           </g>
         );
       })}
