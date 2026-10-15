@@ -204,8 +204,24 @@ function CountyMap({
       {nodes.map((n, i) => {
         const prev = nodes[Math.max(0, i - 1)];
         const inOrder = OUTBREAK_ORDER.indexOf(n.id as (typeof OUTBREAK_ORDER)[number]);
+        const isSelected = selected === n.id;
+        const isCleared = cleared.includes(n.id);
         return (
-          <g key={n.id}>
+          <g
+            key={n.id}
+            role="button"
+            tabIndex={0}
+            aria-label={`Select location ${n.label}${isCleared ? " (Cleared)" : ""}`}
+            aria-pressed={isSelected}
+            onClick={() => onPick(n.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onPick(n.id);
+              }
+            }}
+            className="cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
             {inOrder > 0 && (
               <line
                 x1={nodes.find((x) => x.id === OUTBREAK_ORDER[inOrder - 1])?.x}
@@ -220,19 +236,15 @@ function CountyMap({
             <circle
               cx={n.x}
               cy={n.y}
-              r={selected === n.id ? 3.6 : 2.4}
-              fill={cleared.includes(n.id) ? "#d4a017" : selected === n.id ? "#c23b22" : "#8a8175"}
-              className="cursor-pointer"
-              onClick={() => onPick(n.id)}
+              r={isSelected ? 3.6 : 2.4}
+              fill={isCleared ? "#d4a017" : isSelected ? "#c23b22" : "#8a8175"}
             />
             <text
               x={n.x + 4}
               y={n.y + 1.2}
-              fill={selected === n.id ? "#e8e0d4" : "#8a8175"}
+              fill={isSelected ? "#e8e0d4" : "#8a8175"}
               fontSize="3.4"
               fontFamily="Oswald"
-              className="cursor-pointer"
-              onClick={() => onPick(n.id)}
             >
               {n.label}
             </text>
