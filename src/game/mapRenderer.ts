@@ -45,6 +45,9 @@ export function renderEnvironment(
   ctx.fill();
 
   // Draw Blood Decals (persists on ground)
+  // OPTIMIZATION: Use static hex color strings with `globalAlpha` instead of allocating dynamic `rgba(...)`
+  // strings per decal every frame. Pre-calculate relative spatter positions in local rotated space
+  // to avoid 4 `Math.cos`/`Math.sin` trig calls per decal per frame.
   for (const decal of bloodDecals) {
     if (
       decal.x + decal.radius < viewport.x ||
@@ -58,20 +61,26 @@ export function renderEnvironment(
     ctx.save();
     ctx.translate(decal.x, decal.y);
     ctx.rotate(decal.rotation);
-    ctx.fillStyle = `rgba(139, 0, 0, ${decal.alpha})`;
+
+    ctx.globalAlpha = decal.alpha;
+    ctx.fillStyle = '#8b0000';
     ctx.beginPath();
     ctx.ellipse(0, 0, decal.radius, decal.radius * 0.65, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Spatter drops
-    ctx.fillStyle = `rgba(90, 0, 0, ${decal.alpha * 0.8})`;
-    for (let i = 0; i < 4; i++) {
-      const angle = (i * Math.PI) / 2 + decal.rotation;
-      const dist = decal.radius * 0.9;
-      ctx.beginPath();
-      ctx.arc(Math.cos(angle) * dist, Math.sin(angle) * dist, decal.radius * 0.2, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    // Spatter drops (unrolled & evaluated in local rotated coordinates)
+    const dist = decal.radius * 0.9;
+    const dropRadius = decal.radius * 0.2;
+    ctx.globalAlpha = decal.alpha * 0.8;
+    ctx.fillStyle = '#5a0000';
+
+    ctx.beginPath();
+    ctx.arc(dist, 0, dropRadius, 0, Math.PI * 2);
+    ctx.arc(0, dist, dropRadius, 0, Math.PI * 2);
+    ctx.arc(-dist, 0, dropRadius, 0, Math.PI * 2);
+    ctx.arc(0, -dist, dropRadius, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.restore();
   }
 
