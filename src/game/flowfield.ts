@@ -7,6 +7,8 @@ export class FlowField {
   block = new Uint8Array(0);
   // Reusable queue buffer to prevent GC allocations during periodic rebuilds
   private q = new Int32Array(0);
+  // Reusable direction vector to eliminate per-zombie allocations in 60 FPS update loop
+  private resDir = { x: 0, y: 0 };
 
   markBlocked(
     mapW: number,
@@ -128,6 +130,8 @@ export class FlowField {
     }
     if (!bx && !by) return null;
     const m = Math.hypot(bx, by) || 1;
-    return { x: bx / m, y: by / m };
+    this.resDir.x = bx / m;
+    this.resDir.y = by / m;
+    return this.resDir;
   }
 }
