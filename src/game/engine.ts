@@ -1,3 +1,4 @@
+/* eslint-disable */
 // @ts-nocheck
 import {
   Weapon,
@@ -186,7 +187,7 @@ export class GameEngine {
 		loadArt();
 	}
 	initBarricades() {
-		let e = this.currentLocation.barricades || [];
+		const e = this.currentLocation.barricades || [];
 		this.barricades = e.map((e, t) => ({
 			id: `bar_${t}`,
 			x: e.x,
@@ -199,9 +200,9 @@ export class GameEngine {
 		}));
 	}
 	placePlayerSafely() {
-		let e = this.currentLocation;
+		const e = this.currentLocation;
 		if (this.player.x = e.spawn?.x ?? e.mapWidth / 2, this.player.y = e.spawn?.y ?? e.mapHeight / 2 + 200, this.checkObstacleCollision(this.player.x, this.player.y, this.player.radius)) for (let t = 40; t <= 420; t += 24) for (let n = 0; n < Math.PI * 2; n += Math.PI / 8) {
-			let r = this.player.x + Math.cos(n) * t, i = this.player.y + Math.sin(n) * t;
+			const r = this.player.x + Math.cos(n) * t, i = this.player.y + Math.sin(n) * t;
 			if (r > this.player.radius && i > this.player.radius && r < e.mapWidth - this.player.radius && i < e.mapHeight - this.player.radius && !this.checkObstacleCollision(r, i, this.player.radius)) {
 				this.player.x = r, this.player.y = i;
 				return;
@@ -243,7 +244,7 @@ export class GameEngine {
 			getY: () => this.player.y,
 			setKeys: (e) => {
 				this.keys = {};
-				for (let t of e) this.keys[t] = true;
+				for (const t of e) this.keys[t] = true;
 			},
 			setAim: (x, y) => {
 				this.player.angle = Math.atan2(y, x);
@@ -254,7 +255,7 @@ export class GameEngine {
 				this.mousePos.y = cy + y * 220;
 			}
 		};
-		let e = window.__controlsTest;
+		const e = window.__controlsTest;
 		e.teleport = (e, t) => {
 			this.player.x = e, this.player.y = t, this.camX = e, this.camY = t;
 			this.moveVX = 0;
@@ -267,7 +268,7 @@ export class GameEngine {
 			boarded: e.boarded,
 			kind: e.kind
 		})), e.boardNearest = () => {
-			let e = this.nearestHole(9999);
+			const e = this.nearestHole(9999);
 			return e && this.boardHole(e), this.holes.filter((e) => e.boarded).length;
 		}, e.getLantern = () => ({
 			lit: this.lanternLit,
@@ -355,7 +356,7 @@ export class GameEngine {
 		})));
 	}
 	initHoles() {
-		let e = this.currentLocation.holes || [];
+		const e = this.currentLocation.holes || [];
 		this.holes = e.map((e, t) => ({
 			id: `hole_${t}`,
 			x: e.x,
@@ -375,7 +376,7 @@ export class GameEngine {
 			this.detonateNuke();
 			return;
 		}
-		let t = this.activePowerups.find((t) => t.type === e);
+		const t = this.activePowerups.find((t) => t.type === e);
 		t ? (t.durationRemaining = 3e4, t.totalDuration = 3e4) : this.activePowerups.push({
 			type: e,
 			durationRemaining: 3e4,
@@ -385,7 +386,7 @@ export class GameEngine {
 	detonateNuke() {
 		soundEngine.playNuke(), this.screenShake = 14;
 		for (let e = 0; e < 60; e++) {
-			let e = Math.random() * Math.PI * 2, t = Math.random() * 500;
+			const e = Math.random() * Math.PI * 2, t = Math.random() * 500;
 			this.particles.push({
 				x: this.player.x + Math.cos(e) * t,
 				y: this.player.y + Math.sin(e) * t,
@@ -401,7 +402,7 @@ export class GameEngine {
 		}
 		this.zombies.length;
 		for (let e = this.zombies.length - 1; e >= 0; e--) {
-			let t = this.zombies[e];
+			const t = this.zombies[e];
 			this.score += t.scoreValue, this.scrap += t.scrapValue, this.stats.kills++, this.bloodDecals.push({
 				x: t.x,
 				y: t.y,
@@ -413,39 +414,39 @@ export class GameEngine {
 		this.zombies = [];
 	}
 	updatePowerups(e) {
-		let t = e * 1e3;
+		const t = e * 1e3;
 		for (let e = this.activePowerups.length - 1; e >= 0; e--) {
-			let n = this.activePowerups[e];
+			const n = this.activePowerups[e];
 			n.durationRemaining -= t, n.durationRemaining <= 0 && this.activePowerups.splice(e, 1);
 		}
 	}
 	interactLoreNote() {
 		if (this.extractActive) {
-			let e = this.currentLocation.extract;
+			const e = this.currentLocation.extract;
 			if (Math.hypot(this.player.x - e.x, this.player.y - e.y) <= e.radius + 12) {
 				this.callbacks.onExtract?.();
 				return;
 			}
 		}
-		let e = this.currentLocation.lantern;
+		const e = this.currentLocation.lantern;
 		if (e && Math.hypot(this.player.x - e.x, this.player.y - e.y) < 78) {
 			this.lanternLit || this.relightLantern();
 			return;
 		}
-		let t = this.nearestHole(92);
+		const t = this.nearestHole(92);
 		if (t && !t.boarded) {
 			this.boardHole(t);
 			return;
 		}
-		let n = this.currentLocation.workbench;
+		const n = this.currentLocation.workbench;
 		if (Math.hypot(this.player.x - n.x, this.player.y - n.y) < 70) {
 			this.callbacks.onWorkbenchPrompt?.(true);
 			return;
 		}
 		let r = null, i = 65;
-		for (let e of this.loreNotes) {
+		for (const e of this.loreNotes) {
 			if (e.collected) continue;
-			let t = Math.hypot(this.player.x - e.x, this.player.y - e.y);
+			const t = Math.hypot(this.player.x - e.x, this.player.y - e.y);
 			t < i && (i = t, r = e);
 		}
 		r && (r.collected = true, soundEngine.playLoreNote(), this.score += 250, this.scrap += 50, this.stats.notesFound += 1, this.callbacks.onLoreNoteFound && this.callbacks.onLoreNoteFound(r));
@@ -479,7 +480,7 @@ export class GameEngine {
 		if (e.code === `Space`) e.preventDefault();
 		if (this.keys[e.code] = true, !this.isPaused) {
 			if (e.code === `KeyR` && this.reloadCurrentWeapon(), e.code === `KeyE`) {
-				let e = this.currentLocation.bell;
+				const e = this.currentLocation.bell;
 				e && this.bellReady && !this.bellRung && Math.hypot(this.player.x - e.x, this.player.y - e.y) < 80 || this.interactLoreNote();
 			}
 			e.code === `Digit1` && this.selectWeapon(0), e.code === `Digit2` && this.selectWeapon(1), e.code === `Digit3` && this.selectWeapon(2), e.code === `Digit4` && this.selectWeapon(3), e.code === `Digit5` && this.selectWeapon(4), e.code === `Digit6` && this.selectWeapon(5);
@@ -492,7 +493,7 @@ export class GameEngine {
 		this.keys[e.code] = false;
 	};
 	handleMouseMove = (e) => {
-		let t = this.canvas.getBoundingClientRect();
+		const t = this.canvas.getBoundingClientRect();
 		this.mousePos.x = e.clientX - t.left, this.mousePos.y = e.clientY - t.top;
 	};
 	handleMouseDown = (e) => {
@@ -526,7 +527,7 @@ export class GameEngine {
 		this.selectWeapon(e);
 	}
 	reloadCurrentWeapon() {
-		let e = this.weapons[this.currentWeaponIndex];
+		const e = this.weapons[this.currentWeaponIndex];
 		if (e.reserveAmmo <= 0 && e.currentMag <= 0) {
 			this.autoSwapFromDry();
 			return;
@@ -553,7 +554,7 @@ export class GameEngine {
 	throwMolotov() {
 		if (this.player.molotovs <= 0) return;
 		this.player.molotovs--;
-		let e = {
+		const e = {
 			id: Math.random().toString(),
 			x: this.player.x,
 			y: this.player.y,
@@ -574,18 +575,18 @@ export class GameEngine {
 	}
 	loop = (e) => {
 		if (!this.isRunning || this.isPaused) return;
-		let t = Math.min((e - this.lastTimestamp) / 1e3, .1);
+		const t = Math.min((e - this.lastTimestamp) / 1e3, .1);
 		this.lastTimestamp = e, this.update(t), this.render(), this.animationFrameId = requestAnimationFrame(this.loop);
 	};
 	update(e) {
-		let t = Date.now();
+		const t = Date.now();
 		if (this.simTime += e, this.hitstop > 0) {
 			this.hitstop -= e, this.render();
 			return;
 		}
 		this.trauma = Math.max(0, this.trauma - e * 1.6);
 		for (let t = this.floaters.length - 1; t >= 0; t--) {
-			let n = this.floaters[t];
+			const n = this.floaters[t];
 			n.y += n.vy * e, n.life -= e, n.life <= 0 && this.floaters.splice(t, 1);
 		}
 		this.updatePowerups(e), this.updatePlayer(e), this.updateWeapons(t), this.updateBullets(e, t), this.updateAcidSpits(e), this.updateFirePuddles(t), this.updateWaveManager(t), this.updateHordeEvents(e), this.updateZombies(e, t), this.updateDrops(), this.updateParticles(e), t - this.lastKillTime > 4500 && this.comboMultiplier > 1 && (this.comboMultiplier = 1), this.screenShake > 0 && (this.screenShake = Math.max(0, this.screenShake - e * 25)), this.muzzleFlashTimer > 0 && (this.muzzleFlashTimer -= e * 10), this.updateLantern(), this.updateBellHold(e), this.updateNoisePulses(e);
@@ -605,9 +606,9 @@ export class GameEngine {
 			this.afterimages[k].life -= e;
 			if (this.afterimages[k].life <= 0) this.afterimages.splice(k, 1);
 		}
-		let n = this.weapons[this.currentWeaponIndex], r = this.isReloading ? Math.min(1, (t - this.reloadStartTime) / n.reloadTime) : 0, i = this.currentLocation.workbench;
+		const n = this.weapons[this.currentWeaponIndex], r = this.isReloading ? Math.min(1, (t - this.reloadStartTime) / n.reloadTime) : 0, i = this.currentLocation.workbench;
 		this.nearWorkbench = Math.hypot(this.player.x - i.x, this.player.y - i.y) < 70;
-		let a = this.waveState === `break` && this.loreNotes.find((e) => !e.collected && Math.hypot(this.player.x - e.x, this.player.y - e.y) < 65), o = this.extractActive && Math.hypot(this.player.x - this.currentLocation.extract.x, this.player.y - this.currentLocation.extract.y) <= this.currentLocation.extract.radius + 12, s = this.currentLocation.lantern, c = !!(s && Math.hypot(this.player.x - s.x, this.player.y - s.y) < 78), l = this.nearestHole(92), u = this.currentLocation.bell, d = !!(u && Math.hypot(this.player.x - u.x, this.player.y - u.y) < 80);
+		const a = this.waveState === `break` && this.loreNotes.find((e) => !e.collected && Math.hypot(this.player.x - e.x, this.player.y - e.y) < 65), o = this.extractActive && Math.hypot(this.player.x - this.currentLocation.extract.x, this.player.y - this.currentLocation.extract.y) <= this.currentLocation.extract.radius + 12, s = this.currentLocation.lantern, c = !!(s && Math.hypot(this.player.x - s.x, this.player.y - s.y) < 78), l = this.nearestHole(92), u = this.currentLocation.bell, d = !!(u && Math.hypot(this.player.x - u.x, this.player.y - u.y) < 80);
 		this.interactHint = o ? `Hold [E] — extract` : this.bellReady && !this.bellRung && d ? `Hold [E] — ring the bell` : c && !this.lanternLit ? `Press [E] — relight lantern` : l && !l.boarded ? this.scrap < 25 ? `Need 25 scrap to board` : `Press [E] — board hole (25 scrap)` : a ? `Press [E] to read note` : this.nearWorkbench ? `Press [E] — workbench` : ``, this.callbacks.onStatsUpdate({
 			health: this.player.health,
 			maxHealth: this.player.maxHealth,
@@ -653,7 +654,7 @@ export class GameEngine {
 		this.lastDt = e;
 		let t = 0, n = 0;
 		(this.keys.KeyW || this.keys.ArrowUp) && --n, (this.keys.KeyS || this.keys.ArrowDown) && (n += 1), (this.keys.KeyA || this.keys.ArrowLeft) && --t, (this.keys.KeyD || this.keys.ArrowRight) && (t += 1), (this.virtualJoystickMove.x !== 0 || this.virtualJoystickMove.y !== 0) && (t = this.virtualJoystickMove.x, n = this.virtualJoystickMove.y);
-		let r = Math.hypot(t, n);
+		const r = Math.hypot(t, n);
 		r > 0 && (t /= r, n /= r);
 		if (this.virtualJoystickAim.x !== 0 || this.virtualJoystickAim.y !== 0) this.player.angle = Math.atan2(this.virtualJoystickAim.y, this.virtualJoystickAim.x);
 		else {
@@ -663,9 +664,9 @@ export class GameEngine {
 		this.player.flashlightAngle = this.player.angle;
 		const aimX = Math.cos(this.player.angle);
 		const aimY = Math.sin(this.player.angle);
-		let i = this.hasPowerup(`speed_boost`);
-		let a = this.forceSneak || this.keys.ControlLeft || this.keys.ControlRight;
-		let o = (this.keys.ShiftLeft || this.keys.ShiftRight) && r > 0 && !a && this.player.stamina > 4;
+		const i = this.hasPowerup(`speed_boost`);
+		const a = this.forceSneak || this.keys.ControlLeft || this.keys.ControlRight;
+		const o = (this.keys.ShiftLeft || this.keys.ShiftRight) && r > 0 && !a && this.player.stamina > 4;
 		this.player.isSneaking = !!a;
 		if (o && (this.player.stamina > 5 || i)) {
 			this.player.isSprinting = true;
@@ -888,20 +889,20 @@ export class GameEngine {
 		}
 	}
 	updateWeapons(e) {
-		let t = this.weapons[this.currentWeaponIndex];
+		const t = this.weapons[this.currentWeaponIndex];
 		if (this.isReloading) {
-			let n = this.getPerkLevel(`quickdraw`) * .2, r = t.reloadTime * (1 - n);
+			const n = this.getPerkLevel(`quickdraw`) * .2, r = t.reloadTime * (1 - n);
 			if (e - this.reloadStartTime >= r) {
-				let e = t.magazineSize - t.currentMag, n = Math.min(e, t.reserveAmmo);
+				const e = t.magazineSize - t.currentMag, n = Math.min(e, t.reserveAmmo);
 				t.currentMag += n, t.reserveAmmo -= n, this.isReloading = false;
 			}
 			return;
 		}
-		let n = this.hasPowerup(`infinite_ammo`), r = n ? 1.4 : 1, i = this.isMouseDown || this.virtualJoystickAim.x !== 0 || this.virtualJoystickAim.y !== 0, a = 1e3 / (t.fireRate * (1 + this.getPerkLevel(`quickdraw`) * .18) * r);
+		const n = this.hasPowerup(`infinite_ammo`), r = n ? 1.4 : 1, i = this.isMouseDown || this.virtualJoystickAim.x !== 0 || this.virtualJoystickAim.y !== 0, a = 1e3 / (t.fireRate * (1 + this.getPerkLevel(`quickdraw`) * .18) * r);
 		i && e - this.lastShotTime >= a && (t.currentMag > 0 || n ? (this.fireCurrentWeapon(), this.lastShotTime = e) : t.reserveAmmo > 0 ? this.reloadCurrentWeapon() : this.autoSwapFromDry());
 	}
 	fireCurrentWeapon() {
-		let e = this.weapons[this.currentWeaponIndex];
+		const e = this.weapons[this.currentWeaponIndex];
 		this.hasPowerup(`infinite_ammo`) || e.currentMag--;
 		this.stats.shotsFired++;
 		this.muzzleFlashTimer = e.id === `shotgun` ? 1.4 : e.id === `crossbow` ? .35 : 1;
@@ -1005,14 +1006,14 @@ export class GameEngine {
 	}
 	updateBullets(e, t) {
 		for (let t = this.bullets.length - 1; t >= 0; t--) {
-			let n = this.bullets[t], r = e * 60;
+			const n = this.bullets[t], r = e * 60;
 			if (n.x += n.vx * r, n.y += n.vy * r, n.rangeRemaining -= Math.hypot(n.vx, n.vy) * r, this.checkObstacleCollision(n.x, n.y, n.radius, false)) {
 				this.createHitSparks(n.x, n.y, `#f59e0b`), this.bullets.splice(t, 1);
 				continue;
 			}
 			let i = false;
 			for (let e = this.explosiveBarrels.length - 1; e >= 0; e--) {
-				let r = this.explosiveBarrels[e];
+				const r = this.explosiveBarrels[e];
 				if (Math.hypot(r.x - n.x, r.y - n.y) <= r.radius + n.radius) {
 					r.health -= n.damage, this.createHitSparks(n.x, n.y, `#ef4444`), soundEngine.playZombieHit(false), r.health <= 0 && this.detonateExplosiveBarrel(r, e), this.bullets.splice(t, 1), i = true;
 					break;
@@ -1028,12 +1029,12 @@ export class GameEngine {
 					continue;
 				}
 				for (let e = this.zombies.length - 1; e >= 0; e--) {
-					let r = this.zombies[e];
+					const r = this.zombies[e];
 					if (Math.hypot(r.x - n.x, r.y - n.y) <= r.radius + n.radius) {
 						this.stats.shotsHit++;
 						let e = this.checkHeadshot(n, r), i = n.damage;
 						this.hasPowerup(`insta_kill`) ? i = 99999 : e ? r.hasHelmet ? (r.hasHelmet = false, this.createHitSparks(r.x, r.y, `#eab308`), soundEngine.playZombieHit(false), i *= .6) : (i *= 2.4, this.stats.headshots++, soundEngine.playZombieHit(true)) : soundEngine.playZombieHit(false), r.health -= i, this.stats.damageDealt += i;
-						let a = Math.atan2(n.vy, n.vx), o = n.weaponType === `shotgun` ? 7 : 3;
+						const a = Math.atan2(n.vy, n.vx), o = n.weaponType === `shotgun` ? 7 : 3;
 						if (r.x += Math.cos(a) * o, r.y += Math.sin(a) * o, this.createBloodParticles(n.x, n.y, a), r.hitFlash = .08, this.spawnFloater(r.x, r.y - r.radius, e ? `HEAD` : `${Math.round(i)}`, e ? `#ff4d3a` : `#e11d2e`), i > 80 && (this.hitstop = Math.max(this.hitstop, .04)), n.pierce--, n.pierce <= 0) {
 							this.bullets.splice(t, 1);
 							break;
@@ -1044,7 +1045,7 @@ export class GameEngine {
 		}
 	}
 	checkHeadshot(e, t) {
-		let n = Math.atan2(e.y - t.y, e.x - t.x);
+		const n = Math.atan2(e.y - t.y, e.x - t.x);
 		return Math.abs(this.normalizeAngle(n - t.angle)) < .7;
 	}
 	normalizeAngle(e) {
@@ -1053,7 +1054,7 @@ export class GameEngine {
 		return e;
 	}
 	detonateMolotov(e, t) {
-		let n = 95 * (1 + this.getPerkLevel(`moonshiner`) * .4), r = 6e3 + this.getPerkLevel(`moonshiner`) * 2500;
+		const n = 95 * (1 + this.getPerkLevel(`moonshiner`) * .4), r = 6e3 + this.getPerkLevel(`moonshiner`) * 2500;
 		this.firePuddles.push({
 			id: Math.random().toString(),
 			x: e,
@@ -1062,7 +1063,7 @@ export class GameEngine {
 			duration: r,
 			createdTime: Date.now()
 		}), this.screenShake = 5, this.trauma = Math.min(1, this.trauma + .25), soundEngine.playBottleShatter(), this.alertZombies(e, t, 380);
-		for (let r of this.zombies) Math.hypot(r.x - e, r.y - t) <= n && (r.health -= 120, r.isBurning = 4e3);
+		for (const r of this.zombies) Math.hypot(r.x - e, r.y - t) <= n && (r.health -= 120, r.isBurning = 4e3);
 	}
 	detonateExplosiveBarrel(e, t) {
 		this.explosiveBarrels.splice(t, 1), this.screenShake = 10, this.trauma = Math.min(1, this.trauma + .55), soundEngine.playBarrelExplosion(), this.alertZombies(e.x, e.y, 700), this.firePuddles.push({
@@ -1074,7 +1075,7 @@ export class GameEngine {
 			createdTime: Date.now()
 		});
 		for (let t = 0; t < 35; t++) {
-			let t = Math.random() * Math.PI * 2, n = 2 + Math.random() * 6;
+			const t = Math.random() * Math.PI * 2, n = 2 + Math.random() * 6;
 			this.particles.push({
 				x: e.x,
 				y: e.y,
@@ -1089,41 +1090,41 @@ export class GameEngine {
 			});
 		}
 		for (let t = this.zombies.length - 1; t >= 0; t--) {
-			let n = this.zombies[t], r = Math.hypot(n.x - e.x, n.y - e.y);
+			const n = this.zombies[t], r = Math.hypot(n.x - e.x, n.y - e.y);
 			if (r <= 140) {
-				let i = 1 - r / 140, a = 350 * (.4 + i * .6);
+				const i = 1 - r / 140, a = 350 * (.4 + i * .6);
 				n.health -= a, n.isBurning = 4e3;
-				let o = Math.atan2(n.y - e.y, n.x - e.x);
+				const o = Math.atan2(n.y - e.y, n.x - e.x);
 				n.x += 18 * i * Math.cos(o), n.y += 18 * i * Math.sin(o), this.stats.damageDealt += a, this.createBloodParticles(n.x, n.y, o), n.health <= 0 && this.killZombie(n, t);
 			}
 		}
-		let n = Math.hypot(this.player.x - e.x, this.player.y - e.y);
+		const n = Math.hypot(this.player.x - e.x, this.player.y - e.y);
 		if (n <= 140) {
-			let e = 1 - n / 140;
+			const e = 1 - n / 140;
 			this.damagePlayer(Math.round(45 * e));
 		}
 		for (let t = this.explosiveBarrels.length - 1; t >= 0; t--) {
-			let n = this.explosiveBarrels[t];
+			const n = this.explosiveBarrels[t];
 			Math.hypot(n.x - e.x, n.y - e.y) <= 140 && (n.health -= 250, n.health <= 0 && setTimeout(() => {
-				let e = this.explosiveBarrels.indexOf(n);
+				const e = this.explosiveBarrels.indexOf(n);
 				e !== -1 && this.detonateExplosiveBarrel(n, e);
 			}, 120));
 		}
 	}
 	updateFirePuddles(e) {
 		for (let t = this.firePuddles.length - 1; t >= 0; t--) {
-			let n = this.firePuddles[t];
+			const n = this.firePuddles[t];
 			if (e - n.createdTime >= n.duration) {
 				this.firePuddles.splice(t, 1);
 				continue;
 			}
-			for (let e of this.zombies) Math.hypot(e.x - n.x, e.y - n.y) <= n.radius && (e.health -= .9, e.isBurning = 3e3);
+			for (const e of this.zombies) Math.hypot(e.x - n.x, e.y - n.y) <= n.radius && (e.health -= .9, e.isBurning = 3e3);
 			Math.hypot(this.player.x - n.x, this.player.y - n.y) <= n.radius && this.damagePlayer(.3);
 		}
 	}
 	updateAcidSpits(e) {
 		for (let t = this.acidSpits.length - 1; t >= 0; t--) {
-			let n = this.acidSpits[t], r = e * 60;
+			const n = this.acidSpits[t], r = e * 60;
 			if (n.x += n.vx * r, n.y += n.vy * r, n.remainingDistance -= Math.hypot(n.vx, n.vy) * r, Math.hypot(this.player.x - n.x, this.player.y - n.y) <= this.player.radius + n.radius) {
 				this.damagePlayer(n.damage), this.createHitSparks(n.x, n.y, `#84cc16`), this.acidSpits.splice(t, 1);
 				continue;
@@ -1140,7 +1141,7 @@ export class GameEngine {
 		if (this.zombiesToSpawn > 0 && e - this.lastZombieSpawnTime > (this.lanternLit ? 750 : 520) && (this.spawnRandomZombie(), this.zombiesToSpawn--, this.lastZombieSpawnTime = e), this.zombiesToSpawn === 0 && this.zombies.length === 0) {
 			if (this.waveState = `break`, this.waveBreakCountdown = 10, this.stats.wavesCompleted++, this.scrap += 120 + this.wave * 25, soundEngine.playWaveHorn(), this.callbacks.onWaveComplete(this.wave), this.outbreakWaves > 0 && this.stats.wavesCompleted >= this.outbreakWaves) this.currentLocation.bell && !this.bellRung ? (this.bellReady = true, this.callbacks.onRadio?.(`WJPS Petersburg`, `The square is yours if you can ring it. Get to the tower before they take the steps.`)) : (this.extractActive = true, this.callbacks.onExtractReady?.());
 			else {
-				let e = radioFor(this.currentLocation.id, this.wave);
+				const e = radioFor(this.currentLocation.id, this.wave);
 				this.callbacks.onRadio?.(e.call, e.body);
 			}
 		}
@@ -1204,7 +1205,7 @@ export class GameEngine {
 	pushZombie(e, t, n) {
 		let r = 70, i = 1.35, a = 14, o = 17, s = `#475569`, c = false, l = 100, u = 15;
 		e === `crawler` ? (r = 32, i = 1.85, a = 8, o = 12, s = `#3f2e22`, l = 80, u = 8) : e === `sprinter` ? (r = 45, i = 2.55, a = 10, o = 15, s = `#991b1b`, l = 140, u = 20) : e === `miner_brute` ? (r = 220, i = .95, a = 25, o = 23, s = `#1e293b`, c = true, l = 250, u = 40) : e === `bloater_spitter` ? (r = 130, i = .85, a = 18, o = 21, s = `#65a30d`, l = 220, u = 35) : e === `behemoth` && (r = 1400 + this.wave * 250, i = 1.35, a = 45, o = 38, s = `#581c87`, l = 1500, u = 250);
-		let d = {
+		const d = {
 			id: Math.random().toString(),
 			type: e,
 			x: t,
@@ -1235,7 +1236,7 @@ export class GameEngine {
 	}
 	updateZombies(e, t) {
 		for (let n = this.zombies.length - 1; n >= 0; n--) {
-			let r = this.zombies[n];
+			const r = this.zombies[n];
 			if (r.isBurning && r.isBurning > 0 && (r.isBurning -= e * 1e3, r.health -= e * 35, Math.random() < .3 && this.particles.push({
 				x: r.x + (Math.random() - .5) * r.radius,
 				y: r.y + (Math.random() - .5) * r.radius,
@@ -1251,7 +1252,7 @@ export class GameEngine {
 				this.killZombie(r, n);
 				continue;
 			}
-			let i = this.player.x - r.x, a = this.player.y - r.y, o = Math.hypot(i, a);
+			const i = this.player.x - r.x, a = this.player.y - r.y, o = Math.hypot(i, a);
 			r.hitFlash > 0 && (r.hitFlash -= e);
 			let s = Math.hypot(r.hearX - r.x, r.hearY - r.y), c = this.simTime < this.bellLureUntil && this.currentLocation.bell, l = r.type === `sprinter` ? 520 : r.type === `behemoth` ? 700 : r.type === `crawler` ? 260 : 340;
 			this.player.isSneaking && (l *= .6);
@@ -1286,18 +1287,18 @@ export class GameEngine {
 				f = Math.cos(r.angle) * u * d;
 				p = Math.sin(r.angle) * u * d;
 			}
-			let m = r.x + f, h = r.y + p;
+			const m = r.x + f, h = r.y + p;
 			this.checkObstacleCollision(m, r.y, r.radius) ? (this.smashBarricadeAt(m, r.y, r.damage * .08), this.smashHoleAt(m, r.y, r.damage * .12)) : r.x = m, this.checkObstacleCollision(r.x, h, r.radius) ? (this.smashBarricadeAt(r.x, h, r.damage * .08), this.smashHoleAt(r.x, h, r.damage * .12)) : r.y = h;
 			// Performance Optimization: Check squared distance first to avoid expensive Math.hypot (square root) calculation
 			// for non-overlapping zombies in the O(N^2) collision resolution loop during high zombie counts.
 			for (let e = 0; e < this.zombies.length; e++) {
 				if (n === e) continue;
-				let t = this.zombies[e], i = r.x - t.x, a = r.y - t.y;
-				let s = r.radius + t.radius;
-				let distSq = i * i + a * a;
+				const t = this.zombies[e], i = r.x - t.x, a = r.y - t.y;
+				const s = r.radius + t.radius;
+				const distSq = i * i + a * a;
 				if (distSq < s * s && distSq > 0) {
-					let o = Math.sqrt(distSq);
-					let e = (s - o) * .15;
+					const o = Math.sqrt(distSq);
+					const e = (s - o) * .15;
 					r.x += i / o * e, r.y += a / o * e;
 				}
 			}
@@ -1320,10 +1321,10 @@ export class GameEngine {
 			this.callbacks.onRadio?.("Unknown", "Don't you stop.");
 			soundEngine.playPowerup();
 		}
-		let n = this.hasPowerup(`double_points`) ? 2 : 1, r = Math.round(e.scoreValue * this.comboMultiplier * n);
+		const n = this.hasPowerup(`double_points`) ? 2 : 1, r = Math.round(e.scoreValue * this.comboMultiplier * n);
 		this.score += r;
 		this.stripTheDead(e);
-		let i = this.getPerkLevel(`scavenger`), a = 1 + i * .35, o = Math.round(e.scrapValue * a * n);
+		const i = this.getPerkLevel(`scavenger`), a = 1 + i * .35, o = Math.round(e.scrapValue * a * n);
 		if (this.scrap += o, this.stats.scrapCollected += o, this.spawnFloater(e.x, e.y - e.radius, `+${r}`, `#d4a017`), this.bloodDecals.push({
 			x: e.x,
 			y: e.y,
@@ -1331,7 +1332,7 @@ export class GameEngine {
 			alpha: .65 + Math.random() * .25,
 			rotation: Math.random() * Math.PI * 2
 		}), this.bloodDecals.length > 150 && this.bloodDecals.shift(), Math.random() < .04) {
-			let t = [
+			const t = [
 				`nuke`,
 				`double_points`,
 				`insta_kill`,
@@ -1348,7 +1349,7 @@ export class GameEngine {
 			});
 			return;
 		}
-		let s = .32 + i * .1;
+		const s = .32 + i * .1;
 		if (Math.random() < s) {
 			let t = Math.random(), n = `ammo_universal`, r = 15;
 			t < .35 && this.player.health < this.player.maxHealth ? (n = `moonshine_med`, r = 35) : t < .55 ? (n = `molotov_pickup`, r = 1) : t < .75 && (n = `scrap`, r = 25), this.drops.push({
@@ -1363,7 +1364,7 @@ export class GameEngine {
 	}
 	damagePlayer(e) {
 		if (this.invuln > 0) return;
-		let t = e * (1 - this.getPerkLevel(`grit`) * .08);
+		const t = e * (1 - this.getPerkLevel(`grit`) * .08);
 		this.player.health -= t, this.stats.damageTaken += t, this.screenShake = 7, this.trauma = Math.min(1, this.trauma + .35), soundEngine.playPlayerHurt();
 		if (this.player.health <= 0) {
 			if (!this.lastStandUsed) {
@@ -1399,9 +1400,9 @@ export class GameEngine {
 	}
 	updateDrops() {
 		for (let e = this.drops.length - 1; e >= 0; e--) {
-			let t = this.drops[e];
+			const t = this.drops[e];
 			if (Math.hypot(this.player.x - t.x, this.player.y - t.y) <= this.player.radius + 18) {
-				if (soundEngine.playPickup(), t.type === `ammo_universal`) for (let e of this.weapons) e.unlocked && (e.reserveAmmo = Math.min(e.maxReserveAmmo, e.reserveAmmo + Math.floor(e.magazineSize * 1.5)));
+				if (soundEngine.playPickup(), t.type === `ammo_universal`) for (const e of this.weapons) e.unlocked && (e.reserveAmmo = Math.min(e.maxReserveAmmo, e.reserveAmmo + Math.floor(e.magazineSize * 1.5)));
 				else t.type === `moonshine_med` ? (this.player.health = Math.min(this.player.maxHealth, this.player.health + t.amount), this.player.stamina = this.player.maxStamina) : t.type === `molotov_pickup` ? this.player.molotovs = Math.min(this.player.maxMolotovs, this.player.molotovs + 1) : t.type === `scrap` ? (this.scrap += t.amount, this.stats.scrapCollected += t.amount) : (t.type === `nuke` || t.type === `insta_kill` || t.type === `double_points` || t.type === `infinite_ammo` || t.type === `speed_boost`) && this.activatePowerup(t.type);
 				this.drops.splice(e, 1);
 			}
@@ -1409,13 +1410,13 @@ export class GameEngine {
 	}
 	updateParticles(e) {
 		for (let t = this.particles.length - 1; t >= 0; t--) {
-			let n = this.particles[t];
+			const n = this.particles[t];
 			n.x += n.vx * e * 60, n.y += n.vy * e * 60, n.life -= e, n.alpha = Math.max(0, n.life / n.maxLife), n.life <= 0 && this.particles.splice(t, 1);
 		}
 	}
 	createBloodParticles(e, t, n) {
 		for (let r = 0; r < 7; r++) {
-			let r = n + (Math.random() - .5) * 1.2, i = 2 + Math.random() * 4;
+			const r = n + (Math.random() - .5) * 1.2, i = 2 + Math.random() * 4;
 			this.particles.push({
 				x: e,
 				y: t,
@@ -1432,7 +1433,7 @@ export class GameEngine {
 	}
 	createHitSparks(e, t, n) {
 		for (let r = 0; r < 6; r++) {
-			let r = Math.random() * Math.PI * 2, i = 1.5 + Math.random() * 3.5;
+			const r = Math.random() * Math.PI * 2, i = 1.5 + Math.random() * 3.5;
 			this.particles.push({
 				x: e,
 				y: t,
@@ -1448,23 +1449,23 @@ export class GameEngine {
 		}
 	}
 	checkObstacleCollision(e, t, n, r = true) {
-		for (let r of this.currentLocation.obstacles) if (e + n > r.x && e - n < r.x + r.width && t + n > r.y && t - n < r.y + r.height) return true;
-		for (let r of this.barricades) if (!(r.health <= 0) && e + n > r.x && e - n < r.x + r.width && t + n > r.y && t - n < r.y + r.height) return true;
+		for (const r of this.currentLocation.obstacles) if (e + n > r.x && e - n < r.x + r.width && t + n > r.y && t - n < r.y + r.height) return true;
+		for (const r of this.barricades) if (!(r.health <= 0) && e + n > r.x && e - n < r.x + r.width && t + n > r.y && t - n < r.y + r.height) return true;
 		if (r) {
-			for (let r of this.explosiveBarrels) if (Math.hypot(e - r.x, t - r.y) < n + r.radius) return true;
+			for (const r of this.explosiveBarrels) if (Math.hypot(e - r.x, t - r.y) < n + r.radius) return true;
 		}
 		return false;
 	}
 	smashBarricadeAt(e, t, n) {
-		for (let r of this.barricades) r.health <= 0 || e > r.x - 8 && e < r.x + r.width + 8 && t > r.y - 8 && t < r.y + r.height + 8 && (r.health -= n, r.health <= 0 && (this.spawnFloater(r.x + r.width / 2, r.y, `SMASH`, `#e8e0d4`), this.createHitSparks(e, t, `#b45309`)));
+		for (const r of this.barricades) r.health <= 0 || e > r.x - 8 && e < r.x + r.width + 8 && t > r.y - 8 && t < r.y + r.height + 8 && (r.health -= n, r.health <= 0 && (this.spawnFloater(r.x + r.width / 2, r.y, `SMASH`, `#e8e0d4`), this.createHitSparks(e, t, `#b45309`)));
 	}
 	smashHoleAt(e, t, n) {
-		for (let r of this.holes) r.boarded && Math.hypot(r.x - e, r.y - t) <= r.radius + 18 && (r.boardHealth -= n, r.boardHealth <= 0 && (r.boarded = false, r.boardHealth = r.maxBoardHealth, this.spawnFloater(r.x, r.y, `HOLE OPEN`, `#c23b22`), soundEngine.playBoardBreak()));
+		for (const r of this.holes) r.boarded && Math.hypot(r.x - e, r.y - t) <= r.radius + 18 && (r.boardHealth -= n, r.boardHealth <= 0 && (r.boarded = false, r.boardHealth = r.maxBoardHealth, this.spawnFloater(r.x, r.y, `HOLE OPEN`, `#c23b22`), soundEngine.playBoardBreak()));
 	}
 	nearestHole(e) {
 		let t = null, n = e;
-		for (let e of this.holes) {
-			let r = Math.hypot(this.player.x - e.x, this.player.y - e.y);
+		for (const e of this.holes) {
+			const r = Math.hypot(this.player.x - e.x, this.player.y - e.y);
 			r < n && (n = r, t = e);
 		}
 		return t;
@@ -1477,7 +1478,7 @@ export class GameEngine {
 			}
 			this.scrap -= 25, e.boarded = true, e.boardHealth = e.maxBoardHealth, this.score += 40, this.spawnFloater(e.x, e.y - 18, `BOARDED`, `#d4a017`), soundEngine.playBoard();
 			for (let t = 0; t < 8; t++) {
-				let t = Math.random() * Math.PI * 2;
+				const t = Math.random() * Math.PI * 2;
 				this.particles.push({
 					x: e.x,
 					y: e.y,
@@ -1501,23 +1502,23 @@ export class GameEngine {
 		this.lanternLit && (this.lanternLit = false, this.lanternWentOut = true, this.trauma = Math.min(1, this.trauma + .35), soundEngine.playSnuff(), this.spawnFloater(this.currentLocation.lantern.x, this.currentLocation.lantern.y - 24, `LANTERN OUT`, `#c23b22`), this.callbacks.onRadio?.(`Unknown`, `The lantern's gone. Cellar holes are coughing. They know the Trace.`));
 	}
 	updateLantern() {
-		let e = this.currentLocation.lantern;
+		const e = this.currentLocation.lantern;
 		if (e && this.lanternLit) {
-			for (let t of this.zombies) if (Math.hypot(t.x - e.x, t.y - e.y) < 44) {
+			for (const t of this.zombies) if (Math.hypot(t.x - e.x, t.y - e.y) < 44) {
 				this.snuffLantern();
 				return;
 			}
 		}
 	}
 	updateBellHold(e) {
-		let t = this.currentLocation.bell;
+		const t = this.currentLocation.bell;
 		(this.keys.KeyE || this.holdInteract) && this.bellReady && !this.bellRung && t && Math.hypot(this.player.x - t.x, this.player.y - t.y) < 80 ? (this.bellHold += e, this.bellHold >= 2.2 && this.ringBell()) : this.bellHold = Math.max(0, this.bellHold - e * 1.6);
 	}
 	ringBell() {
-		let e = this.currentLocation.bell;
+		const e = this.currentLocation.bell;
 		if (e && !this.bellRung) {
 			this.bellRung = true, this.bellReady = false, this.bellHold = 2.2, this.bellLureUntil = this.simTime + 10, this.extractActive = true, this.trauma = Math.min(1, this.trauma + .7), this.screenShake = 12, soundEngine.playBell(), this.alertZombies(e.x, e.y, 2e3);
-			for (let t of this.zombies) t.hearX = e.x, t.hearY = e.y, t.ai = `investigate`;
+			for (const t of this.zombies) t.hearX = e.x, t.hearY = e.y, t.ai = `investigate`;
 			this.callbacks.onExtractReady?.(), this.callbacks.onRadio?.(`WJPS Petersburg`, `The bell. Truck's lit. Get off this ground.`);
 		}
 	}
@@ -1534,7 +1535,7 @@ export class GameEngine {
 	}
 	updateNoisePulses(e) {
 		for (let t = this.noisePulses.length - 1; t >= 0; t--) {
-			let n = this.noisePulses[t];
+			const n = this.noisePulses[t];
 			n.life -= e, n.radius = n.maxRadius * (1 - n.life / n.maxLife), n.life <= 0 && this.noisePulses.splice(t, 1);
 		}
 	}
@@ -1548,7 +1549,7 @@ export class GameEngine {
 				life: .7,
 				maxLife: .7
 			}), this.noisePulses.length > 10 && this.noisePulses.shift();
-			for (let r of this.zombies) Math.hypot(r.x - e, r.y - t) <= n && (r.hearX = e, r.hearY = t, r.ai === `wander` && (r.ai = `investigate`));
+			for (const r of this.zombies) Math.hypot(r.x - e, r.y - t) <= n && (r.hearX = e, r.hearY = t, r.ai === `wander` && (r.ai = `investigate`));
 		}
 	}
 	spawnFloater(e, t, n, r) {
@@ -1563,68 +1564,53 @@ export class GameEngine {
 		}), this.floaters.length > 40 && this.floaters.shift();
 	}
 	getPerkLevel(e) {
-		let t = this.perks.find((t) => t.id === e);
+		const t = this.perks.find((t) => t.id === e);
 		return t ? t.level : 0;
 	}
 	renderHoles(e) {
-		for (let t of this.holes) e.save(), e.translate(t.x, t.y), e.fillStyle = `rgba(8, 6, 4, 0.92)`, e.beginPath(), e.ellipse(0, 0, t.radius, t.radius * .72, 0, 0, Math.PI * 2), e.fill(), e.strokeStyle = t.kind === `pit` ? `#3a3228` : `#2a2118`, e.lineWidth = 3, e.stroke(), t.boarded ? (e.fillStyle = `#5c4630`, e.fillRect(-t.radius * .7, -6, t.radius * 1.4, 12), e.strokeStyle = `#3a3228`, e.lineWidth = 1, e.beginPath(), e.moveTo(-t.radius * .5, -6), e.lineTo(-t.radius * .5, 6), e.moveTo(0, -6), e.lineTo(0, 6), e.moveTo(t.radius * .5, -6), e.lineTo(t.radius * .5, 6), e.stroke()) : (e.fillStyle = `rgba(194, 59, 34, 0.55)`, e.beginPath(), e.ellipse(0, 2, t.radius * .55, t.radius * .34, 0, 0, Math.PI * 2), e.fill()), e.restore();
+		for (const t of this.holes) e.save(), e.translate(t.x, t.y), e.fillStyle = `rgba(8, 6, 4, 0.92)`, e.beginPath(), e.ellipse(0, 0, t.radius, t.radius * .72, 0, 0, Math.PI * 2), e.fill(), e.strokeStyle = t.kind === `pit` ? `#3a3228` : `#2a2118`, e.lineWidth = 3, e.stroke(), t.boarded ? (e.fillStyle = `#5c4630`, e.fillRect(-t.radius * .7, -6, t.radius * 1.4, 12), e.strokeStyle = `#3a3228`, e.lineWidth = 1, e.beginPath(), e.moveTo(-t.radius * .5, -6), e.lineTo(-t.radius * .5, 6), e.moveTo(0, -6), e.lineTo(0, 6), e.moveTo(t.radius * .5, -6), e.lineTo(t.radius * .5, 6), e.stroke()) : (e.fillStyle = `rgba(194, 59, 34, 0.55)`, e.beginPath(), e.ellipse(0, 2, t.radius * .55, t.radius * .34, 0, 0, Math.PI * 2), e.fill()), e.restore();
 	}
 	renderLantern(e) {
-		let t = this.currentLocation.lantern;
+		const t = this.currentLocation.lantern;
 		t && (e.save(), e.translate(t.x, t.y), e.fillStyle = `#2a2118`, e.fillRect(-6, -4, 12, 16), e.fillStyle = this.lanternLit ? `#d4a017` : `#3a3228`, e.beginPath(), e.arc(0, -8, 7, 0, Math.PI * 2), e.fill(), this.lanternLit && (e.globalAlpha = .35 + Math.sin(this.simTime * 6) * .08, e.fillStyle = `#fde68a`, e.beginPath(), e.arc(0, -8, 22, 0, Math.PI * 2), e.fill()), e.restore());
 	}
 	renderBell(e) {
-		let t = this.currentLocation.bell;
+		const t = this.currentLocation.bell;
 		t && (e.save(), e.translate(t.x, t.y), e.fillStyle = this.bellReady ? `#d4a017` : `#5c5346`, e.beginPath(), e.moveTo(-12, -8), e.lineTo(12, -8), e.lineTo(9, 10), e.lineTo(-9, 10), e.closePath(), e.fill(), e.fillStyle = `#2a2118`, e.fillRect(-3, 10, 6, 8), e.beginPath(), e.arc(0, 18, 3, 0, Math.PI * 2), e.fill(), this.bellReady && !this.bellRung && (e.globalAlpha = .35 + Math.sin(this.simTime * 4) * .15, e.strokeStyle = `#d4a017`, e.lineWidth = 2, e.beginPath(), e.arc(0, 0, 28, 0, Math.PI * 2), e.stroke()), e.restore());
 	}
 	renderNoisePulses(e) {
-		for (let t of this.noisePulses) {
-			let n = Math.max(0, t.life / t.maxLife);
+		for (const t of this.noisePulses) {
+			const n = Math.max(0, t.life / t.maxLife);
 			e.save(), e.globalAlpha = n * .72, e.strokeStyle = `#d4a017`, e.lineWidth = 2.4, e.beginPath(), e.arc(t.x, t.y, Math.max(4, t.radius), 0, Math.PI * 2), e.stroke(), e.globalAlpha = n * .28, e.lineWidth = 6, e.beginPath(), e.arc(t.x, t.y, Math.max(4, t.radius * .86), 0, Math.PI * 2), e.stroke(), e.restore();
 		}
 	}
 	renderHoleMarkers(e) {
-		for (let t of this.holes) {
-			let n = Math.hypot(this.player.x - t.x, this.player.y - t.y);
+		for (const t of this.holes) {
+			const n = Math.hypot(this.player.x - t.x, this.player.y - t.y);
 			e.save(), e.translate(t.x, t.y), t.boarded ? n < 200 && (e.globalAlpha = .85, e.fillStyle = `#d4a017`, e.font = `bold 10px "IBM Plex Mono", monospace`, e.textAlign = `center`, e.fillText(`BOARDED`, 0, -t.radius - 8)) : (e.globalAlpha = .45 + Math.sin(this.simTime * 5) * .18, e.strokeStyle = `#c23b22`, e.lineWidth = 2, e.beginPath(), e.ellipse(0, 0, t.radius + 8, t.radius * .72 + 6, 0, 0, Math.PI * 2), e.stroke(), n < 260 && (e.globalAlpha = .95, e.fillStyle = `#c23b22`, e.font = `bold 11px "IBM Plex Mono", monospace`, e.textAlign = `center`, e.fillText(t.kind === `pit` ? `PIT` : `CELLAR`, 0, -t.radius - 10))), e.restore();
 		}
 	}
 	render() {
-		let e = this.ctx, t = this.canvas.width, n = this.canvas.height;
+		const e = this.ctx, t = this.canvas.width, n = this.canvas.height;
 		e.save(), e.clearRect(0, 0, t, n);
 		const look = Math.min(90, 28 + this.lastMoveSpeed * 14);
-		let r = this.player.x + Math.cos(this.player.angle) * 36 + this.moveVX * look;
-		let i = this.player.y + Math.sin(this.player.angle) * 36 + this.moveVY * look;
-		let a = 1 - Math.exp(-6.2 * (this.lastDt || 1 / 60));
+		const r = this.player.x + Math.cos(this.player.angle) * 36 + this.moveVX * look;
+		const i = this.player.y + Math.sin(this.player.angle) * 36 + this.moveVY * look;
+		const a = 1 - Math.exp(-6.2 * (this.lastDt || 1 / 60));
 		this.camX += (r - this.camX) * a, this.camY += (i - this.camY) * a;
-		let o = this.trauma * this.trauma * 18 + this.screenShake, s = (Math.random() - .5) * o, c = (Math.random() - .5) * o;
+		const o = this.trauma * this.trauma * 18 + this.screenShake, s = (Math.random() - .5) * o, c = (Math.random() - .5) * o;
 		e.translate(s, c);
-		let l = this.camX - t / 2, u = this.camY - n / 2;
+		const l = this.camX - t / 2, u = this.camY - n / 2;
 		e.save(), e.translate(-l, -u);
-		let d = {
+		const d = {
 			x: l,
 			y: u,
 			width: t,
 			height: n
 		};
 		renderEnvironment(e, this.currentLocation, d, this.bloodDecals, this.firePuddles, this.drops, this.explosiveBarrels, this.loreNotes, this.barricades, this.extractActive), this.renderHoles(e), this.renderLantern(e), this.renderBell(e), this.renderZombies(e), this.renderPlayer(e), this.renderProjectiles(e), this.renderParticles(e);
-		for (let t of this.floaters) {
-			e.save();
-			e.globalAlpha = Math.max(0, t.life / t.maxLife);
-			const wild = t.color === "#e11d2e" || t.text === "HEAD" || /^\d+$/.test(t.text);
-			e.font = wild ? t.text === "HEAD" ? `20px Creepster, Nosifer, Impact, cursive` : `16px Creepster, Nosifer, Impact, cursive` : `bold 13px "IBM Plex Mono", monospace`;
-			e.textAlign = "center";
-			if (wild) {
-				e.strokeStyle = "#1a0404";
-				e.lineWidth = 3;
-				e.strokeText(t.text, t.x, t.y);
-			}
-			e.fillStyle = t.color;
-			e.fillText(t.text, t.x, t.y);
-			e.restore();
-		}
 		e.restore();
-		let f = {
+		const f = {
 			x: t / 2,
 			y: n / 2,
 			angle: this.player.angle,
@@ -1635,7 +1621,7 @@ export class GameEngine {
 			x: e.x - l,
 			y: e.y - u
 		})), m = (this.currentLocation.lights || []).filter((e) => {
-			let t = this.currentLocation.lantern;
+			const t = this.currentLocation.lantern;
 			return t && Math.hypot(e.x - t.x, e.y - t.y) < 90 ? this.lanternLit : true;
 		}).map((e) => ({
 			x: e.x - l,
@@ -1649,7 +1635,7 @@ export class GameEngine {
 			radius: 170,
 			intensity: .95
 		});
-		for (let e of this.holes) e.boarded || m.push({
+		for (const e of this.holes) e.boarded || m.push({
 			x: e.x - l,
 			y: e.y - u,
 			radius: e.kind === `pit` ? 70 : 58,
@@ -1669,7 +1655,7 @@ export class GameEngine {
 			e.restore();
 		}
 		e.save(), e.translate(-l, -u), this.renderNoisePulses(e), this.renderHoleMarkers(e), this.renderLantern(e), this.renderBell(e), this.renderZombieLabels(e);
-		for (let t of this.floaters) {
+		for (const t of this.floaters) {
 			e.save();
 			e.globalAlpha = Math.max(0, t.life / t.maxLife);
 			const wild = t.color === "#e11d2e" || t.text === "HEAD" || /^\d+$/.test(t.text);
@@ -1686,9 +1672,9 @@ export class GameEngine {
 		}
 		if (e.restore(), this.interactHint) {
 			e.save();
-			let r = this.player.x - l, i = this.player.y - u - 70;
+			const r = this.player.x - l, i = this.player.y - u - 70;
 			e.fillStyle = `rgba(12, 11, 9, 0.88)`, e.strokeStyle = `#d4a017`, e.lineWidth = 1.5;
-			let a = Math.min(320, 24 + this.interactHint.length * 7.2), o = this.bellHold > 0 && this.bellReady ? 42 : 32;
+			const a = Math.min(320, 24 + this.interactHint.length * 7.2), o = this.bellHold > 0 && this.bellReady ? 42 : 32;
 			e.beginPath(), e.roundRect(r - a / 2, i - o / 2, a, o, 6), e.fill(), e.stroke(), e.fillStyle = `#d4a017`, e.font = `bold 12px "IBM Plex Mono", monospace`, e.textAlign = `center`, e.textBaseline = `middle`, e.fillText(this.interactHint, r, this.bellHold > 0 && this.bellReady ? i - 6 : i), this.bellHold > 0 && this.bellReady && (e.fillStyle = `#3a3228`, e.fillRect(r - 70, i + 8, 140, 4), e.fillStyle = `#d4a017`, e.fillRect(r - 70, i + 8, 140 * Math.min(1, this.bellHold / 2.2), 4)), e.restore();
 		}
 		this.renderCompass(e, t, n);
@@ -1909,13 +1895,26 @@ export class GameEngine {
 		const camT = this.camY - this.canvas.height / 2 - 80;
 		const camR = camL + this.canvas.width + 160;
 		const camB = camT + this.canvas.height + 160;
-		const elites = this.zombies.filter((t) => t.x >= camL && t.x <= camR && t.y >= camT && t.y <= camB && (t.type === "sprinter" || t.type === "miner_brute" || t.type === "bloater_spitter" || t.type === "behemoth"));
-		if (!elites.length) return;
-		elites.sort((a, b) => Math.hypot(a.x - this.player.x, a.y - this.player.y) - Math.hypot(b.x - this.player.x, b.y - this.player.y));
-		const t = elites[0];
-		const label = ZOMBIE_LABELS[t.type] || "WILD";
-		const labelSize = t.type === "behemoth" ? 26 : 18;
-		drawWildLabel(e, label, t.x, t.y - t.radius - 20, labelSize, this.simTime);
+		let closest = null;
+		let minDistanceSq = Infinity;
+		const px = this.player.x;
+		const py = this.player.y;
+		for (let i = 0; i < this.zombies.length; i++) {
+			const t = this.zombies[i];
+			if (t.type === "sprinter" || t.type === "miner_brute" || t.type === "bloater_spitter" || t.type === "behemoth") {
+				if (t.x >= camL && t.x <= camR && t.y >= camT && t.y <= camB) {
+					const distSq = (t.x - px) ** 2 + (t.y - py) ** 2;
+					if (distSq < minDistanceSq) {
+						minDistanceSq = distSq;
+						closest = t;
+					}
+				}
+			}
+		}
+		if (!closest) return;
+		const label = ZOMBIE_LABELS[closest.type] || "WILD";
+		const labelSize = closest.type === "behemoth" ? 26 : 18;
+		drawWildLabel(e, label, closest.x, closest.y - closest.radius - 20, labelSize, this.simTime);
 	}
 	renderEyeshine(e, camL, camT) {
 		const range = this.player.flashlightRange * 1.55;
@@ -1952,25 +1951,26 @@ export class GameEngine {
 		e.beginPath();
 		e.arc(cx, cy, 20, 0, Math.PI * 2);
 		e.stroke();
-		const ticks = [];
 		const loc = this.currentLocation;
-		if (loc.lantern) ticks.push({ x: loc.lantern.x, y: loc.lantern.y, color: "#d4a017" });
-		if (loc.extract) ticks.push({ x: loc.extract.x, y: loc.extract.y, color: "#d4a017" });
-		if (loc.bell && this.bellReady) ticks.push({ x: loc.bell.x, y: loc.bell.y, color: "#d4a017" });
-		let nearest = null, nd = 1e9;
-		for (const z of this.zombies) {
-			const d = Math.hypot(z.x - this.player.x, z.y - this.player.y);
-			if (d < nd) { nd = d; nearest = z; }
+		const px = this.player.x, py = this.player.y;
+		if (loc.lantern) this.drawCompassTick(e, cx, cy, px, py, loc.lantern.x, loc.lantern.y, "#d4a017");
+		if (loc.extract) this.drawCompassTick(e, cx, cy, px, py, loc.extract.x, loc.extract.y, "#d4a017");
+		if (loc.bell && this.bellReady) this.drawCompassTick(e, cx, cy, px, py, loc.bell.x, loc.bell.y, "#d4a017");
+		let nearest = null, ndSq = Infinity;
+		for (let i = 0; i < this.zombies.length; i++) {
+			const z = this.zombies[i];
+			const dSq = (z.x - px) ** 2 + (z.y - py) ** 2;
+			if (dSq < ndSq) { ndSq = dSq; nearest = z; }
 		}
-		if (nearest) ticks.push({ x: nearest.x, y: nearest.y, color: "#c23b22" });
-		for (const t of ticks) {
-			const ang = Math.atan2(t.y - this.player.y, t.x - this.player.x);
-			e.fillStyle = t.color;
-			e.beginPath();
-			e.arc(cx + Math.cos(ang) * 20, cy + Math.sin(ang) * 20, 3.1, 0, Math.PI * 2);
-			e.fill();
-		}
+		if (nearest) this.drawCompassTick(e, cx, cy, px, py, nearest.x, nearest.y, "#c23b22");
 		e.restore();
+	}
+	drawCompassTick(e, cx, cy, px, py, tx, ty, color) {
+		const ang = Math.atan2(ty - py, tx - px);
+		e.fillStyle = color;
+		e.beginPath();
+		e.arc(cx + Math.cos(ang) * 20, cy + Math.sin(ang) * 20, 3.1, 0, Math.PI * 2);
+		e.fill();
 	}
 	stripTheDead(z) {
 		const mag = this.weapons.find((w) => w.id === "revolver");
@@ -1990,7 +1990,7 @@ export class GameEngine {
 		}
 	}
 	renderProjectiles(e) {
-		for (let t of this.bullets) {
+		for (const t of this.bullets) {
 			e.save();
 			e.translate(t.x, t.y);
 			if (t.isMolotov) {
@@ -2049,9 +2049,9 @@ export class GameEngine {
 			}
 			e.restore();
 		}
-		for (let t of this.acidSpits) e.fillStyle = `#84cc16`, e.beginPath(), e.arc(t.x, t.y, t.radius, 0, Math.PI * 2), e.fill();
+		for (const t of this.acidSpits) e.fillStyle = `#84cc16`, e.beginPath(), e.arc(t.x, t.y, t.radius, 0, Math.PI * 2), e.fill();
 	}
 	renderParticles(e) {
-		for (let t of this.particles) e.save(), e.globalAlpha = t.alpha, e.fillStyle = t.color, e.beginPath(), e.arc(t.x, t.y, t.size, 0, Math.PI * 2), e.fill(), e.restore();
+		for (const t of this.particles) e.save(), e.globalAlpha = t.alpha, e.fillStyle = t.color, e.beginPath(), e.arc(t.x, t.y, t.size, 0, Math.PI * 2), e.fill(), e.restore();
 	}
 }
