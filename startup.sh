@@ -1,8 +1,7 @@
 #!/bin/sh
-set -eu
-cd /workspace
-node scripts/preview.mjs stop || true
-if curl -sf -o /dev/null --max-time 2 http://127.0.0.1:8080/; then
+if curl -s http://127.0.0.1:8080/ >/dev/null; then
+  echo "App already running on port 8080"
   exit 0
 fi
-npm run dev >>/tmp/app-startup.log 2>&1 &
+
+pnpm dev > /tmp/dev.log 2>&1 &
