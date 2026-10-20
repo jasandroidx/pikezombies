@@ -1288,17 +1288,20 @@ export class GameEngine {
 			}
 			let m = r.x + f, h = r.y + p;
 			this.checkObstacleCollision(m, r.y, r.radius) ? (this.smashBarricadeAt(m, r.y, r.damage * .08), this.smashHoleAt(m, r.y, r.damage * .12)) : r.x = m, this.checkObstacleCollision(r.x, h, r.radius) ? (this.smashBarricadeAt(r.x, h, r.damage * .08), this.smashHoleAt(r.x, h, r.damage * .12)) : r.y = h;
-			// Performance Optimization: Check squared distance first to avoid expensive Math.hypot (square root) calculation
-			// for non-overlapping zombies in the O(N^2) collision resolution loop during high zombie counts.
-			for (let e = 0; e < this.zombies.length; e++) {
-				if (n === e) continue;
+			// Performance Optimization: Check squared distance and compare unique pairs (e < n) to reduce
+			// pair checks by 50% from N(N-1) to N(N-1)/2, pushing both zombies apart symmetrically.
+			for (let e = 0; e < n; e++) {
 				let t = this.zombies[e], i = r.x - t.x, a = r.y - t.y;
 				let s = r.radius + t.radius;
 				let distSq = i * i + a * a;
 				if (distSq < s * s && distSq > 0) {
 					let o = Math.sqrt(distSq);
-					let e = (s - o) * .15;
-					r.x += i / o * e, r.y += a / o * e;
+					let push = (s - o) * .075;
+					let nx = i / o, ny = a / o;
+					r.x += nx * push;
+					r.y += ny * push;
+					t.x -= nx * push;
+					t.y -= ny * push;
 				}
 			}
 			o <= r.radius + this.player.radius && this.invuln <= 0 && t - r.lastAttackTime >= r.attackCooldown && (this.lastKiller = r.type, this.damagePlayer(r.damage), r.lastAttackTime = t);
@@ -1909,26 +1912,48 @@ export class GameEngine {
 		const camT = this.camY - this.canvas.height / 2 - 80;
 		const camR = camL + this.canvas.width + 160;
 		const camB = camT + this.canvas.height + 160;
-		const elites = this.zombies.filter((t) => t.x >= camL && t.x <= camR && t.y >= camT && t.y <= camB && (t.type === "sprinter" || t.type === "miner_brute" || t.type === "bloater_spitter" || t.type === "behemoth"));
-		if (!elites.length) return;
-		elites.sort((a, b) => Math.hypot(a.x - this.player.x, a.y - this.player.y) - Math.hypot(b.x - this.player.x, b.y - this.player.y));
-		const t = elites[0];
+		// Performance Optimization: Find nearest elite in a single linear scan using squared distance
+		// to avoid array allocations (.filter) and repeated square roots in sort comparators (.sort).
+		let nearestElite = null;
+		let minDistSq = Infinity;
+		const px = this.player.x, py = this.player.y;
+		for (let i = 0; i < this.zombies.length; i++) {
+			const t = this.zombies[i];
+			if (t.x >= camL && t.x <= camR && t.y >= camT && t.y <= camB &&
+				(t.type === "sprinter" || t.type === "miner_brute" || t.type === "bloater_spitter" || t.type === "behemoth")) {
+				const dx = t.x - px, dy = t.y - py;
+				const distSq = dx * dx + dy * dy;
+				if (distSq < minDistSq) {
+					minDistSq = distSq;
+					nearestElite = t;
+				}
+			}
+		}
+		if (!nearestElite) return;
+		const t = nearestElite;
 		const label = ZOMBIE_LABELS[t.type] || "WILD";
 		const labelSize = t.type === "behemoth" ? 26 : 18;
 		drawWildLabel(e, label, t.x, t.y - t.radius - 20, labelSize, this.simTime);
 	}
 	renderEyeshine(e, camL, camT) {
 		const range = this.player.flashlightRange * 1.55;
+		const rangeSq = range * range;
 		const cone = 0.62;
-		for (const z of this.zombies) {
-			const dx = z.x - this.player.x, dy = z.y - this.player.y;
-			const dist = Math.hypot(dx, dy);
-			if (dist < 40 || dist > range) continue;
+		const px = this.player.x, py = this.player.y;
+		const flAngle = this.player.flashlightAngle;
+		const flRange = this.player.flashlightRange;
+		for (let i = 0; i < this.zombies.length; i++) {
+			const z = this.zombies[i];
+			const dx = z.x - px, dy = z.y - py;
+			const distSq = dx * dx + dy * dy;
+			// Performance Optimization: Early exit using squared distance before calling Math.sqrt
+			if (distSq < 1600 || distSq > rangeSq) continue;
+			const dist = Math.sqrt(distSq);
 			const ang = Math.atan2(dy, dx);
-			let da = ang - this.player.flashlightAngle;
+			let da = ang - flAngle;
 			while (da > Math.PI) da -= Math.PI * 2;
 			while (da < -Math.PI) da += Math.PI * 2;
-			const inCone = Math.abs(da) < cone && dist < this.player.flashlightRange;
+			const inCone = Math.abs(da) < cone && dist < flRange;
 			if (inCone && dist < 220) continue;
 			const sx = z.x - camL, sy = z.y - camT;
 			const glow = 3.4 + Math.sin(this.simTime * 8 + z.x) * 1.2;
