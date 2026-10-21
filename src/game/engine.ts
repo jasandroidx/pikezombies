@@ -208,13 +208,29 @@ export class GameEngine {
 			}
 		}
 	}
+	// Reusable array buffer for active obstacles/barricades to eliminate GC allocation churn in rebuildFlow()
+	private activeBlocks: { x: number; y: number; width: number; height: number }[] = [];
+
+	/**
+	 * Rebuilds the BFS pathfinding flow field centered on player position.
+	 * OPTIMIZATION: Reuses the `activeBlocks` array buffer instead of allocating new arrays & objects via filter/map
+	 * on every execution (~3 times per second during gameplay loop).
+	 */
 	rebuildFlow(force = false) {
 		const loc = this.currentLocation;
-		const blocks = [
-			...(loc.obstacles || []),
-			...this.barricades.filter((b) => b.health > 0).map((b) => ({ x: b.x, y: b.y, width: b.width, height: b.height })),
-		];
-		this.flow.markBlocked(loc.mapWidth, loc.mapHeight, blocks);
+		this.activeBlocks.length = 0;
+		if (loc.obstacles) {
+			for (let i = 0; i < loc.obstacles.length; i++) {
+				this.activeBlocks.push(loc.obstacles[i]);
+			}
+		}
+		for (let i = 0; i < this.barricades.length; i++) {
+			const b = this.barricades[i];
+			if (b.health > 0) {
+				this.activeBlocks.push(b);
+			}
+		}
+		this.flow.markBlocked(loc.mapWidth, loc.mapHeight, this.activeBlocks);
 		this.flow.rebuild(this.player.x, this.player.y);
 		this.flowRebuild = 0.35;
 	}
