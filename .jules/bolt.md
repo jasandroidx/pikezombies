@@ -5,3 +5,7 @@
 ## 2025-05-18 - Pre-rendering Canvas Particle Sprites
 **Learning:** Re-creating Canvas `createRadialGradient` objects and formatting color stop `rgba(...)` strings inside 60 FPS particle animation render loops creates extreme GC allocation churn (2,400 gradient instantiations and 7,200 string allocations/sec for 40 particles). Pre-rendering particle textures once onto offscreen canvas elements and blitting via `ctx.drawImage()` eliminates allocation overhead entirely.
 **Action:** When rendering multi-particle lighting, fog, or visual effects in Canvas 2D loops, pre-render particle textures onto offscreen canvases during initialization and draw using `ctx.drawImage()`.
+
+## 2025-05-25 - Single-pass squared distance for Canvas hot loops
+**Learning:** Performing `.filter()` and `.sort()` with `Math.hypot` inside 60 FPS render methods (like finding nearest elite zombies or radar targets) creates garbage collection pressure and heavy Math.sqrt overhead. Replacing array chaining with a single-pass loop using squared distance (`dx * dx + dy * dy`) completely eliminates array allocations, sorting, and square-root calculations.
+**Action:** In game loop render routines, avoid `.filter()`, `.sort()`, and `Math.hypot()` when finding minimum/maximum distance items. Use single-pass loops comparing squared distances instead.

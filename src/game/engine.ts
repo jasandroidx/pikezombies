@@ -1909,21 +1909,46 @@ export class GameEngine {
 		const camT = this.camY - this.canvas.height / 2 - 80;
 		const camR = camL + this.canvas.width + 160;
 		const camB = camT + this.canvas.height + 160;
-		const elites = this.zombies.filter((t) => t.x >= camL && t.x <= camR && t.y >= camT && t.y <= camB && (t.type === "sprinter" || t.type === "miner_brute" || t.type === "bloater_spitter" || t.type === "behemoth"));
-		if (!elites.length) return;
-		elites.sort((a, b) => Math.hypot(a.x - this.player.x, a.y - this.player.y) - Math.hypot(b.x - this.player.x, b.y - this.player.y));
-		const t = elites[0];
-		const label = ZOMBIE_LABELS[t.type] || "WILD";
-		const labelSize = t.type === "behemoth" ? 26 : 18;
-		drawWildLabel(e, label, t.x, t.y - t.radius - 20, labelSize, this.simTime);
+		const px = this.player.x;
+		const py = this.player.y;
+		let nearestElite = null;
+		let minDistSq = Infinity;
+		// OPTIMIZATION: Single-pass scan using squared distance to find nearest elite zombie.
+		// Eliminates array allocation (.filter), array sort (.sort), and Math.hypot square-root calls every frame.
+		for (let i = 0; i < this.zombies.length; i++) {
+			const z = this.zombies[i];
+			if (
+				z.x >= camL && z.x <= camR &&
+				z.y >= camT && z.y <= camB &&
+				(z.type === "sprinter" || z.type === "miner_brute" || z.type === "bloater_spitter" || z.type === "behemoth")
+			) {
+				const dx = z.x - px;
+				const dy = z.y - py;
+				const distSq = dx * dx + dy * dy;
+				if (distSq < minDistSq) {
+					minDistSq = distSq;
+					nearestElite = z;
+				}
+			}
+		}
+		if (!nearestElite) return;
+		const label = ZOMBIE_LABELS[nearestElite.type] || "WILD";
+		const labelSize = nearestElite.type === "behemoth" ? 26 : 18;
+		drawWildLabel(e, label, nearestElite.x, nearestElite.y - nearestElite.radius - 20, labelSize, this.simTime);
 	}
 	renderEyeshine(e, camL, camT) {
 		const range = this.player.flashlightRange * 1.55;
+		const rangeSq = range * range;
+		const px = this.player.x;
+		const py = this.player.y;
 		const cone = 0.62;
 		for (const z of this.zombies) {
-			const dx = z.x - this.player.x, dy = z.y - this.player.y;
-			const dist = Math.hypot(dx, dy);
-			if (dist < 40 || dist > range) continue;
+			const dx = z.x - px, dy = z.y - py;
+			const distSq = dx * dx + dy * dy;
+			// OPTIMIZATION: Quick squared distance bounds check (40^2 = 1600) to skip Math.hypot
+			// and Math.atan2 trig calculations for zombies out of eyeshine range.
+			if (distSq < 1600 || distSq > rangeSq) continue;
+			const dist = Math.sqrt(distSq);
 			const ang = Math.atan2(dy, dx);
 			let da = ang - this.player.flashlightAngle;
 			while (da > Math.PI) da -= Math.PI * 2;
@@ -1957,10 +1982,14 @@ export class GameEngine {
 		if (loc.lantern) ticks.push({ x: loc.lantern.x, y: loc.lantern.y, color: "#d4a017" });
 		if (loc.extract) ticks.push({ x: loc.extract.x, y: loc.extract.y, color: "#d4a017" });
 		if (loc.bell && this.bellReady) ticks.push({ x: loc.bell.x, y: loc.bell.y, color: "#d4a017" });
-		let nearest = null, nd = 1e9;
-		for (const z of this.zombies) {
-			const d = Math.hypot(z.x - this.player.x, z.y - this.player.y);
-			if (d < nd) { nd = d; nearest = z; }
+		let nearest = null, minSq = Infinity;
+		const px = this.player.x, py = this.player.y;
+		// OPTIMIZATION: Squared distance search avoids running Math.hypot (square root) on every zombie.
+		for (let i = 0; i < this.zombies.length; i++) {
+			const z = this.zombies[i];
+			const dx = z.x - px, dy = z.y - py;
+			const dSq = dx * dx + dy * dy;
+			if (dSq < minSq) { minSq = dSq; nearest = z; }
 		}
 		if (nearest) ticks.push({ x: nearest.x, y: nearest.y, color: "#c23b22" });
 		for (const t of ticks) {
