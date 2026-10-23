@@ -197,15 +197,32 @@ function CountyMap({
   return (
     <svg viewBox="0 0 100 100" className="h-44 w-full md:h-80">
       <rect width="100" height="100" fill="#0c0b09" />
-      <path d="M8 40 C 22 48, 40 55, 70 58 C 82 60, 90 72, 94 88" fill="none" stroke="#3a3228" strokeWidth="2" />
-      <text x="70" y="54" fill="#8a8175" fontSize="3.2" fontFamily="IBM Plex Mono">
+      <path d="M8 40 C 22 48, 40 55, 70 58 C 82 60, 90 72, 94 88" fill="none" stroke="#3a3228" strokeWidth="2" className="pointer-events-none" />
+      <text x="70" y="54" fill="#8a8175" fontSize="3.2" fontFamily="IBM Plex Mono" className="pointer-events-none select-none">
         Patoka
       </text>
-      {nodes.map((n, i) => {
-        const prev = nodes[Math.max(0, i - 1)];
+      {nodes.map((n) => {
         const inOrder = OUTBREAK_ORDER.indexOf(n.id as (typeof OUTBREAK_ORDER)[number]);
+        const isCleared = cleared.includes(n.id);
+        const isSelected = selected === n.id;
+        const statusLabel = isCleared ? "Cleared" : isSelected ? "Selected" : "Available";
+        const ariaLabel = `${n.label} (${statusLabel})`;
         return (
-          <g key={n.id}>
+          <g
+            key={n.id}
+            role="button"
+            tabIndex={0}
+            aria-label={ariaLabel}
+            aria-pressed={isSelected}
+            onClick={() => onPick(n.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onPick(n.id);
+              }
+            }}
+            className="cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+          >
             {inOrder > 0 && (
               <line
                 x1={nodes.find((x) => x.id === OUTBREAK_ORDER[inOrder - 1])?.x}
@@ -215,28 +232,25 @@ function CountyMap({
                 stroke="#3a3228"
                 strokeWidth="0.6"
                 strokeDasharray="1.5 1"
+                className="pointer-events-none"
               />
             )}
             <circle
               cx={n.x}
               cy={n.y}
-              r={selected === n.id ? 3.6 : 2.4}
-              fill={cleared.includes(n.id) ? "#d4a017" : selected === n.id ? "#c23b22" : "#8a8175"}
-              className="cursor-pointer"
-              onClick={() => onPick(n.id)}
+              r={isSelected ? 3.6 : 2.4}
+              fill={isCleared ? "#d4a017" : isSelected ? "#c23b22" : "#8a8175"}
             />
             <text
               x={n.x + 4}
               y={n.y + 1.2}
-              fill={selected === n.id ? "#e8e0d4" : "#8a8175"}
+              fill={isSelected ? "#e8e0d4" : "#8a8175"}
               fontSize="3.4"
               fontFamily="Oswald"
-              className="cursor-pointer"
-              onClick={() => onPick(n.id)}
             >
               {n.label}
             </text>
-            <title>{prev.label}</title>
+            <title>{ariaLabel}</title>
           </g>
         );
       })}
