@@ -23,20 +23,19 @@ export function renderEnvironment(
   const endX = viewport.x + viewport.width;
   const endY = viewport.y + viewport.height;
 
+  // Subtle grid/gravel detail - Batched into a single path to avoid ~30 stroke calls per frame
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
   ctx.lineWidth = 1;
+  ctx.beginPath();
   for (let x = startX; x <= endX; x += tileSize) {
-    ctx.beginPath();
     ctx.moveTo(x, viewport.y);
     ctx.lineTo(x, viewport.y + viewport.height);
-    ctx.stroke();
   }
   for (let y = startY; y <= endY; y += tileSize) {
-    ctx.beginPath();
     ctx.moveTo(viewport.x, y);
     ctx.lineTo(viewport.x + viewport.width, y);
-    ctx.stroke();
   }
+  ctx.stroke();
 
   // Draw natural dirt patches and trails
   ctx.fillStyle = location.trail || '#26211a';
@@ -44,7 +43,7 @@ export function renderEnvironment(
   ctx.ellipse(location.mapWidth / 2, location.mapHeight / 2, 450, 320, 0.2, 0, Math.PI * 2);
   ctx.fill();
 
-  // Draw Blood Decals (persists on ground)
+  // Draw Blood Decals (persists on ground - viewport culled)
   for (const decal of bloodDecals) {
     if (
       decal.x + decal.radius < viewport.x ||
@@ -75,12 +74,21 @@ export function renderEnvironment(
     ctx.restore();
   }
 
-  // Draw Fire Puddles (Molotov effects)
+  // Draw Fire Puddles (Molotov effects - viewport culled)
   const now = Date.now();
   for (const puddle of firePuddles) {
     const elapsed = now - puddle.createdTime;
     const progress = elapsed / puddle.duration;
     if (progress >= 1) continue;
+
+    if (
+      puddle.x + puddle.radius < viewport.x ||
+      puddle.x - puddle.radius > viewport.x + viewport.width ||
+      puddle.y + puddle.radius < viewport.y ||
+      puddle.y - puddle.radius > viewport.y + viewport.height
+    ) {
+      continue;
+    }
 
     const flicker = 0.85 + Math.sin(now * 0.02 + puddle.x) * 0.15;
     const currentRadius = puddle.radius * flicker;
@@ -103,12 +111,29 @@ export function renderEnvironment(
     ctx.fill();
   }
 
-  // Draw Map Obstacles
+  // Draw Map Obstacles (Viewport culled to eliminate rendering off-screen canvas elements)
   for (const obs of location.obstacles) {
+    if (
+      obs.x + obs.width < viewport.x - 30 ||
+      obs.x > viewport.x + viewport.width + 30 ||
+      obs.y + obs.height < viewport.y - 30 ||
+      obs.y > viewport.y + viewport.height + 30
+    ) {
+      continue;
+    }
     renderObstacle(ctx, obs);
   }
 
+  // Draw Barricades (Viewport culled)
   for (const bar of barricades) {
+    if (
+      bar.x + bar.width < viewport.x - 10 ||
+      bar.x > viewport.x + viewport.width + 10 ||
+      bar.y + bar.height < viewport.y - 10 ||
+      bar.y > viewport.y + viewport.height + 10
+    ) {
+      continue;
+    }
     renderBarricade(ctx, bar);
   }
 
@@ -116,19 +141,43 @@ export function renderEnvironment(
     renderExtract(ctx, location.extract);
   }
 
-  // Draw Interactive Explosive Barrels
+  // Draw Interactive Explosive Barrels (Viewport culled)
   for (const barrel of barrels) {
+    if (
+      barrel.x + barrel.radius + 15 < viewport.x ||
+      barrel.x - barrel.radius - 15 > viewport.x + viewport.width ||
+      barrel.y + barrel.radius + 15 < viewport.y ||
+      barrel.y - barrel.radius - 15 > viewport.y + viewport.height
+    ) {
+      continue;
+    }
     renderExplosiveBarrel(ctx, barrel, now);
   }
 
-  // Draw Drops (Ammo, Moonshine, Scrap, Powerups)
+  // Draw Drops (Ammo, Moonshine, Scrap, Powerups - Viewport culled)
   for (const drop of drops) {
+    if (
+      drop.x + 30 < viewport.x ||
+      drop.x - 30 > viewport.x + viewport.width ||
+      drop.y + 30 < viewport.y ||
+      drop.y - 30 > viewport.y + viewport.height
+    ) {
+      continue;
+    }
     renderDrop(ctx, drop, now);
   }
 
-  // Draw Lore Notes on the ground
+  // Draw Lore Notes on the ground (Viewport culled)
   for (const note of loreNotes) {
     if (!note.collected) {
+      if (
+        note.x + 35 < viewport.x ||
+        note.x - 35 > viewport.x + viewport.width ||
+        note.y + 35 < viewport.y ||
+        note.y - 35 > viewport.y + viewport.height
+      ) {
+        continue;
+      }
       renderLoreNote(ctx, note, now);
     }
   }
