@@ -103,7 +103,7 @@ export function StartScreen({ onStartGame, isMuted, onToggleMute }: StartScreenP
                 key={d.label}
                 type="button"
                 onClick={() => setDifficulty(d.n)}
-                className={`flex-1 rounded border px-2 py-2 font-mono text-[11px] uppercase tracking-widest ${
+                className={`flex-1 rounded border px-2 py-2 font-mono text-[11px] uppercase tracking-widest focus-visible:ring-2 focus-visible:ring-accent outline-none ${
                   difficulty === d.n ? "border-accent bg-surface-2 text-accent" : "border-border bg-surface text-muted"
                 }`}
               >
@@ -116,7 +116,7 @@ export function StartScreen({ onStartGame, isMuted, onToggleMute }: StartScreenP
             id="start-outbreak"
             type="button"
             onClick={() => onStartGame(0, difficulty, "outbreak")}
-            className="flex items-center justify-center gap-2 rounded border border-primary bg-primary px-4 py-3 font-heading text-lg font-bold uppercase tracking-widest text-fg"
+            className="flex items-center justify-center gap-2 rounded border border-primary bg-primary px-4 py-3 font-heading text-lg font-bold uppercase tracking-widest text-fg focus-visible:ring-2 focus-visible:ring-accent outline-none"
           >
             <Skull className="h-5 w-5" />
             Outbreak night
@@ -125,7 +125,7 @@ export function StartScreen({ onStartGame, isMuted, onToggleMute }: StartScreenP
             id="start-survival"
             type="button"
             onClick={() => onStartGame(selectedLocation, difficulty, "survival")}
-            className="flex items-center justify-center gap-2 rounded border border-accent bg-surface-2 px-4 py-3 font-heading text-lg font-bold uppercase tracking-widest text-accent"
+            className="flex items-center justify-center gap-2 rounded border border-accent bg-surface-2 px-4 py-3 font-heading text-lg font-bold uppercase tracking-widest text-accent focus-visible:ring-2 focus-visible:ring-accent outline-none"
           >
             <Play className="h-5 w-5" />
             Survival · this place
@@ -195,48 +195,77 @@ function CountyMap({
     { id: "stendal_backbone", x: 62, y: 80, label: "Stendal" },
   ];
   return (
-    <svg viewBox="0 0 100 100" className="h-44 w-full md:h-80">
-      <rect width="100" height="100" fill="#0c0b09" />
-      <path d="M8 40 C 22 48, 40 55, 70 58 C 82 60, 90 72, 94 88" fill="none" stroke="#3a3228" strokeWidth="2" />
-      <text x="70" y="54" fill="#8a8175" fontSize="3.2" fontFamily="IBM Plex Mono">
+    <svg viewBox="0 0 100 100" className="h-44 w-full md:h-80" aria-label="County map locations">
+      <rect width="100" height="100" fill="#0c0b09" className="pointer-events-none" />
+      <path d="M8 40 C 22 48, 40 55, 70 58 C 82 60, 90 72, 94 88" fill="none" stroke="#3a3228" strokeWidth="2" className="pointer-events-none" />
+      <text x="70" y="54" fill="#8a8175" fontSize="3.2" fontFamily="IBM Plex Mono" className="pointer-events-none select-none">
         Patoka
       </text>
-      {nodes.map((n, i) => {
-        const prev = nodes[Math.max(0, i - 1)];
-        const inOrder = OUTBREAK_ORDER.indexOf(n.id as (typeof OUTBREAK_ORDER)[number]);
+      <g className="pointer-events-none">
+        {nodes.map((n) => {
+          const inOrder = OUTBREAK_ORDER.indexOf(n.id as (typeof OUTBREAK_ORDER)[number]);
+          if (inOrder <= 0) return null;
+          const prevNode = nodes.find((x) => x.id === OUTBREAK_ORDER[inOrder - 1]);
+          if (!prevNode) return null;
+          return (
+            <line
+              key={`line-${n.id}`}
+              x1={prevNode.x}
+              y1={prevNode.y}
+              x2={n.x}
+              y2={n.y}
+              stroke="#3a3228"
+              strokeWidth="0.6"
+              strokeDasharray="1.5 1"
+            />
+          );
+        })}
+      </g>
+      {nodes.map((n) => {
+        const isSelected = selected === n.id;
+        const isCleared = cleared.includes(n.id);
         return (
-          <g key={n.id}>
-            {inOrder > 0 && (
-              <line
-                x1={nodes.find((x) => x.id === OUTBREAK_ORDER[inOrder - 1])?.x}
-                y1={nodes.find((x) => x.id === OUTBREAK_ORDER[inOrder - 1])?.y}
-                x2={n.x}
-                y2={n.y}
-                stroke="#3a3228"
-                strokeWidth="0.6"
-                strokeDasharray="1.5 1"
-              />
-            )}
+          <g
+            key={n.id}
+            role="button"
+            tabIndex={0}
+            aria-label={`${n.label}${isCleared ? " (Cleared)" : ""}`}
+            aria-pressed={isSelected}
+            onClick={() => onPick(n.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onPick(n.id);
+              }
+            }}
+            className="cursor-pointer focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-1"
+          >
+            <rect
+              x={n.x - 4}
+              y={n.y - 4}
+              width={28}
+              height={8}
+              fill="transparent"
+              className="cursor-pointer"
+            />
             <circle
               cx={n.x}
               cy={n.y}
-              r={selected === n.id ? 3.6 : 2.4}
-              fill={cleared.includes(n.id) ? "#d4a017" : selected === n.id ? "#c23b22" : "#8a8175"}
+              r={isSelected ? 3.6 : 2.4}
+              fill={isCleared ? "#d4a017" : isSelected ? "#c23b22" : "#8a8175"}
               className="cursor-pointer"
-              onClick={() => onPick(n.id)}
             />
             <text
               x={n.x + 4}
               y={n.y + 1.2}
-              fill={selected === n.id ? "#e8e0d4" : "#8a8175"}
+              fill={isSelected ? "#e8e0d4" : "#8a8175"}
               fontSize="3.4"
               fontFamily="Oswald"
               className="cursor-pointer"
-              onClick={() => onPick(n.id)}
             >
               {n.label}
             </text>
-            <title>{prev.label}</title>
+            <title>{n.label}</title>
           </g>
         );
       })}
