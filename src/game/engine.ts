@@ -1462,10 +1462,15 @@ export class GameEngine {
 		for (let r of this.holes) r.boarded && Math.hypot(r.x - e, r.y - t) <= r.radius + 18 && (r.boardHealth -= n, r.boardHealth <= 0 && (r.boarded = false, r.boardHealth = r.maxBoardHealth, this.spawnFloater(r.x, r.y, `HOLE OPEN`, `#c23b22`), soundEngine.playBoardBreak()));
 	}
 	nearestHole(e) {
-		let t = null, n = e;
-		for (let e of this.holes) {
-			let r = Math.hypot(this.player.x - e.x, this.player.y - e.y);
-			r < n && (n = r, t = e);
+		let t = null, nSq = e * e;
+		const px = this.player.x, py = this.player.y;
+		for (const h of this.holes) {
+			const dx = px - h.x, dy = py - h.y;
+			const rSq = dx * dx + dy * dy;
+			if (rSq < nSq) {
+				nSq = rSq;
+				t = h;
+			}
 		}
 		return t;
 	}
@@ -1501,11 +1506,14 @@ export class GameEngine {
 		this.lanternLit && (this.lanternLit = false, this.lanternWentOut = true, this.trauma = Math.min(1, this.trauma + .35), soundEngine.playSnuff(), this.spawnFloater(this.currentLocation.lantern.x, this.currentLocation.lantern.y - 24, `LANTERN OUT`, `#c23b22`), this.callbacks.onRadio?.(`Unknown`, `The lantern's gone. Cellar holes are coughing. They know the Trace.`));
 	}
 	updateLantern() {
-		let e = this.currentLocation.lantern;
+		const e = this.currentLocation.lantern;
 		if (e && this.lanternLit) {
-			for (let t of this.zombies) if (Math.hypot(t.x - e.x, t.y - e.y) < 44) {
-				this.snuffLantern();
-				return;
+			for (const t of this.zombies) {
+				const dx = t.x - e.x, dy = t.y - e.y;
+				if (dx * dx + dy * dy < 1936) {
+					this.snuffLantern();
+					return;
+				}
 			}
 		}
 	}
@@ -1548,7 +1556,16 @@ export class GameEngine {
 				life: .7,
 				maxLife: .7
 			}), this.noisePulses.length > 10 && this.noisePulses.shift();
-			for (let r of this.zombies) Math.hypot(r.x - e, r.y - t) <= n && (r.hearX = e, r.hearY = t, r.ai === `wander` && (r.ai = `investigate`));
+			// Optimization: Check squared distance to avoid Math.hypot (square root) per zombie
+			const nSq = n * n;
+			for (const r of this.zombies) {
+				const dx = r.x - e, dy = r.y - t;
+				if (dx * dx + dy * dy <= nSq) {
+					r.hearX = e;
+					r.hearY = t;
+					if (r.ai === `wander`) r.ai = `investigate`;
+				}
+			}
 		}
 	}
 	spawnFloater(e, t, n, r) {
@@ -1911,7 +1928,9 @@ export class GameEngine {
 		const camB = camT + this.canvas.height + 160;
 		const elites = this.zombies.filter((t) => t.x >= camL && t.x <= camR && t.y >= camT && t.y <= camB && (t.type === "sprinter" || t.type === "miner_brute" || t.type === "bloater_spitter" || t.type === "behemoth"));
 		if (!elites.length) return;
-		elites.sort((a, b) => Math.hypot(a.x - this.player.x, a.y - this.player.y) - Math.hypot(b.x - this.player.x, b.y - this.player.y));
+		// Optimization: Use squared distance for sorting to avoid Math.hypot (square root) per element
+		const px = this.player.x, py = this.player.y;
+		elites.sort((a, b) => ((a.x - px) ** 2 + (a.y - py) ** 2) - ((b.x - px) ** 2 + (b.y - py) ** 2));
 		const t = elites[0];
 		const label = ZOMBIE_LABELS[t.type] || "WILD";
 		const labelSize = t.type === "behemoth" ? 26 : 18;
@@ -1919,11 +1938,14 @@ export class GameEngine {
 	}
 	renderEyeshine(e, camL, camT) {
 		const range = this.player.flashlightRange * 1.55;
+		const rangeSq = range * range;
 		const cone = 0.62;
 		for (const z of this.zombies) {
 			const dx = z.x - this.player.x, dy = z.y - this.player.y;
-			const dist = Math.hypot(dx, dy);
-			if (dist < 40 || dist > range) continue;
+			// Optimization: Check squared distance first to avoid Math.hypot for zombies out of range
+			const distSq = dx * dx + dy * dy;
+			if (distSq < 1600 || distSq > rangeSq) continue;
+			const dist = Math.sqrt(distSq);
 			const ang = Math.atan2(dy, dx);
 			let da = ang - this.player.flashlightAngle;
 			while (da > Math.PI) da -= Math.PI * 2;
@@ -1957,10 +1979,13 @@ export class GameEngine {
 		if (loc.lantern) ticks.push({ x: loc.lantern.x, y: loc.lantern.y, color: "#d4a017" });
 		if (loc.extract) ticks.push({ x: loc.extract.x, y: loc.extract.y, color: "#d4a017" });
 		if (loc.bell && this.bellReady) ticks.push({ x: loc.bell.x, y: loc.bell.y, color: "#d4a017" });
-		let nearest = null, nd = 1e9;
+		// Optimization: Use squared distance to avoid Math.hypot (square root) per zombie on every 60 FPS frame
+		let nearest = null, ndSq = Infinity;
+		const px = this.player.x, py = this.player.y;
 		for (const z of this.zombies) {
-			const d = Math.hypot(z.x - this.player.x, z.y - this.player.y);
-			if (d < nd) { nd = d; nearest = z; }
+			const dx = z.x - px, dy = z.y - py;
+			const dSq = dx * dx + dy * dy;
+			if (dSq < ndSq) { ndSq = dSq; nearest = z; }
 		}
 		if (nearest) ticks.push({ x: nearest.x, y: nearest.y, color: "#c23b22" });
 		for (const t of ticks) {
