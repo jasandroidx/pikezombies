@@ -102,8 +102,9 @@ export function StartScreen({ onStartGame, isMuted, onToggleMute }: StartScreenP
               <button
                 key={d.label}
                 type="button"
+                aria-pressed={difficulty === d.n}
                 onClick={() => setDifficulty(d.n)}
-                className={`flex-1 rounded border px-2 py-2 font-mono text-[11px] uppercase tracking-widest ${
+                className={`flex-1 rounded border px-2 py-2 font-mono text-[11px] uppercase tracking-widest focus-visible:ring-2 focus-visible:ring-accent outline-none ${
                   difficulty === d.n ? "border-accent bg-surface-2 text-accent" : "border-border bg-surface text-muted"
                 }`}
               >
@@ -201,11 +202,23 @@ function CountyMap({
       <text x="70" y="54" fill="#8a8175" fontSize="3.2" fontFamily="IBM Plex Mono">
         Patoka
       </text>
-      {nodes.map((n, i) => {
-        const prev = nodes[Math.max(0, i - 1)];
+      {nodes.map((n) => {
         const inOrder = OUTBREAK_ORDER.indexOf(n.id as (typeof OUTBREAK_ORDER)[number]);
         return (
-          <g key={n.id}>
+          <g
+            key={n.id}
+            role="button"
+            tabIndex={0}
+            aria-label={`${n.label} location${selected === n.id ? ", selected" : ""}${cleared.includes(n.id) ? ", cleared" : ""}`}
+            className="cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            onClick={() => onPick(n.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onPick(n.id);
+              }
+            }}
+          >
             {inOrder > 0 && (
               <line
                 x1={nodes.find((x) => x.id === OUTBREAK_ORDER[inOrder - 1])?.x}
@@ -215,6 +228,7 @@ function CountyMap({
                 stroke="#3a3228"
                 strokeWidth="0.6"
                 strokeDasharray="1.5 1"
+                className="pointer-events-none"
               />
             )}
             <circle
@@ -222,8 +236,6 @@ function CountyMap({
               cy={n.y}
               r={selected === n.id ? 3.6 : 2.4}
               fill={cleared.includes(n.id) ? "#d4a017" : selected === n.id ? "#c23b22" : "#8a8175"}
-              className="cursor-pointer"
-              onClick={() => onPick(n.id)}
             />
             <text
               x={n.x + 4}
@@ -231,12 +243,10 @@ function CountyMap({
               fill={selected === n.id ? "#e8e0d4" : "#8a8175"}
               fontSize="3.4"
               fontFamily="Oswald"
-              className="cursor-pointer"
-              onClick={() => onPick(n.id)}
             >
               {n.label}
             </text>
-            <title>{prev.label}</title>
+            <title>{n.label}{cleared.includes(n.id) ? " (Cleared)" : ""}</title>
           </g>
         );
       })}
