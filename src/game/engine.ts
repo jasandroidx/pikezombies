@@ -1919,27 +1919,48 @@ export class GameEngine {
 	}
 	renderEyeshine(e, camL, camT) {
 		const range = this.player.flashlightRange * 1.55;
+		const rangeSq = range * range;
+		const flRangeSq = this.player.flashlightRange * this.player.flashlightRange;
 		const cone = 0.62;
+		let contextConfigured = false;
+
+		// OPTIMIZATION:
+		// 1. Use squared distance (distSq) to skip expensive Math.sqrt (hypot) and Math.atan2
+		//    for zombies outside the eyeshine distance threshold.
+		// 2. Hoist canvas state changes (save, fillStyle, shadowColor, shadowBlur, restore)
+		//    outside the zombie iteration loop to eliminate 50-100 canvas state mutations
+		//    and drop-shadow pipeline re-initializations per frame at 60 FPS.
 		for (const z of this.zombies) {
 			const dx = z.x - this.player.x, dy = z.y - this.player.y;
-			const dist = Math.hypot(dx, dy);
-			if (dist < 40 || dist > range) continue;
+			const distSq = dx * dx + dy * dy;
+			if (distSq < 1600 || distSq > rangeSq) continue;
+
+			const dist = Math.sqrt(distSq);
 			const ang = Math.atan2(dy, dx);
 			let da = ang - this.player.flashlightAngle;
 			while (da > Math.PI) da -= Math.PI * 2;
 			while (da < -Math.PI) da += Math.PI * 2;
-			const inCone = Math.abs(da) < cone && dist < this.player.flashlightRange;
+			const inCone = Math.abs(da) < cone && distSq < flRangeSq;
 			if (inCone && dist < 220) continue;
+
+			if (!contextConfigured) {
+				e.save();
+				e.fillStyle = "rgba(225, 29, 46, 0.92)";
+				e.shadowColor = "#e11d2e";
+				e.shadowBlur = 12;
+				contextConfigured = true;
+			}
+
 			const sx = z.x - camL, sy = z.y - camT;
 			const glow = 3.4 + Math.sin(this.simTime * 8 + z.x) * 1.2;
-			e.save();
-			e.fillStyle = "rgba(225, 29, 46, 0.92)";
-			e.shadowColor = "#e11d2e";
-			e.shadowBlur = 12;
+			const r = glow * 0.42;
 			e.beginPath();
-			e.arc(sx - 5, sy - 6, glow * 0.42, 0, Math.PI * 2);
-			e.arc(sx + 5, sy - 6, glow * 0.42, 0, Math.PI * 2);
+			e.arc(sx - 5, sy - 6, r, 0, Math.PI * 2);
+			e.arc(sx + 5, sy - 6, r, 0, Math.PI * 2);
 			e.fill();
+		}
+
+		if (contextConfigured) {
 			e.restore();
 		}
 	}
