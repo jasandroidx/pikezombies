@@ -5,3 +5,7 @@
 ## 2025-05-18 - Pre-rendering Canvas Particle Sprites
 **Learning:** Re-creating Canvas `createRadialGradient` objects and formatting color stop `rgba(...)` strings inside 60 FPS particle animation render loops creates extreme GC allocation churn (2,400 gradient instantiations and 7,200 string allocations/sec for 40 particles). Pre-rendering particle textures once onto offscreen canvas elements and blitting via `ctx.drawImage()` eliminates allocation overhead entirely.
 **Action:** When rendering multi-particle lighting, fog, or visual effects in Canvas 2D loops, pre-render particle textures onto offscreen canvases during initialization and draw using `ctx.drawImage()`.
+
+## 2025-05-25 - Avoid Canvas2D ctx.filter in Hot Sprite Loops
+**Learning:** Setting `ctx.filter` (e.g. `brightness(...) saturate(...)`) inside 60 FPS canvas sprite rendering loops invalidates context state and forces browser engines to allocate offscreen filter surfaces or fall back to slow software filter passes on every draw call. Using `globalCompositeOperation = "source-atop"` with a colored `fillRect` over the drawn sprite achieves identical hit-flash effects via fast GPU/hardware blitting.
+**Action:** Avoid `ctx.filter` in high-frequency 2D canvas draw loops; use native compositing (`source-atop`) or pre-baked sprite sheets for sprite tinting/flashing.

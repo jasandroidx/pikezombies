@@ -65,8 +65,16 @@ export function drawSprite(
   if (!img) return false;
   ctx.save();
   if (flipX) ctx.scale(-1, 1);
-  if (hitFlash > 0) ctx.filter = "brightness(2.2) saturate(0.35)";
   ctx.drawImage(img, -size / 2, -size / 2, size, size);
+  // OPTIMIZATION: Use `source-atop` compositing instead of `ctx.filter`.
+  // Setting `ctx.filter` on a Canvas 2D context causes context state resets and forces
+  // offscreen surface allocation / software filter pipeline passes in browser canvas backends,
+  // causing severe frame rate drops during 60 FPS combat when multiple sprites flash simultaneously.
+  if (hitFlash > 0) {
+    ctx.globalCompositeOperation = "source-atop";
+    ctx.fillStyle = "rgba(255, 250, 220, 0.75)";
+    ctx.fillRect(-size / 2, -size / 2, size, size);
+  }
   ctx.restore();
   return true;
 }
