@@ -103,32 +103,86 @@ export function renderEnvironment(
     ctx.fill();
   }
 
-  // Draw Map Obstacles
+  // Draw Map Obstacles (Viewport culled to avoid offscreen rendering overhead)
+  const padding = 40;
+  const vpL = viewport.x - padding;
+  const vpR = viewport.x + viewport.width + padding;
+  const vpT = viewport.y - padding;
+  const vpB = viewport.y + viewport.height + padding;
+
   for (const obs of location.obstacles) {
+    if (
+      obs.x + obs.width < vpL ||
+      obs.x > vpR ||
+      obs.y + obs.height < vpT ||
+      obs.y > vpB
+    ) {
+      continue;
+    }
     renderObstacle(ctx, obs);
   }
 
   for (const bar of barricades) {
+    if (
+      bar.x + bar.width < vpL ||
+      bar.x > vpR ||
+      bar.y + bar.height < vpT ||
+      bar.y > vpB
+    ) {
+      continue;
+    }
     renderBarricade(ctx, bar);
   }
 
   if (extractActive) {
-    renderExtract(ctx, location.extract);
+    const ext = location.extract;
+    if (
+      ext.x + ext.radius >= vpL &&
+      ext.x - ext.radius <= vpR &&
+      ext.y + ext.radius >= vpT &&
+      ext.y - ext.radius <= vpB
+    ) {
+      renderExtract(ctx, ext);
+    }
   }
 
   // Draw Interactive Explosive Barrels
   for (const barrel of barrels) {
+    if (
+      barrel.x + barrel.radius < vpL ||
+      barrel.x - barrel.radius > vpR ||
+      barrel.y + barrel.radius < vpT ||
+      barrel.y - barrel.radius > vpB
+    ) {
+      continue;
+    }
     renderExplosiveBarrel(ctx, barrel, now);
   }
 
   // Draw Drops (Ammo, Moonshine, Scrap, Powerups)
   for (const drop of drops) {
+    if (
+      drop.x + 24 < vpL ||
+      drop.x - 24 > vpR ||
+      drop.y + 24 < vpT ||
+      drop.y - 24 > vpB
+    ) {
+      continue;
+    }
     renderDrop(ctx, drop, now);
   }
 
   // Draw Lore Notes on the ground
   for (const note of loreNotes) {
     if (!note.collected) {
+      if (
+        note.x + 30 < vpL ||
+        note.x - 30 > vpR ||
+        note.y + 30 < vpT ||
+        note.y - 30 > vpB
+      ) {
+        continue;
+      }
       renderLoreNote(ctx, note, now);
     }
   }
