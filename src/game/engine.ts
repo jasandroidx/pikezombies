@@ -1288,20 +1288,29 @@ export class GameEngine {
 			}
 			let m = r.x + f, h = r.y + p;
 			this.checkObstacleCollision(m, r.y, r.radius) ? (this.smashBarricadeAt(m, r.y, r.damage * .08), this.smashHoleAt(m, r.y, r.damage * .12)) : r.x = m, this.checkObstacleCollision(r.x, h, r.radius) ? (this.smashBarricadeAt(r.x, h, r.damage * .08), this.smashHoleAt(r.x, h, r.damage * .12)) : r.y = h;
-			// Performance Optimization: Check squared distance first to avoid expensive Math.hypot (square root) calculation
-			// for non-overlapping zombies in the O(N^2) collision resolution loop during high zombie counts.
-			for (let e = 0; e < this.zombies.length; e++) {
-				if (n === e) continue;
+			o <= r.radius + this.player.radius && this.invuln <= 0 && t - r.lastAttackTime >= r.attackCooldown && (this.lastKiller = r.type, this.damagePlayer(r.damage), r.lastAttackTime = t);
+		}
+
+		// Performance Optimization: Run zombie-zombie separation pass AFTER all movement steps.
+		// Compares each unique pair once (e = n + 1) and displaces both zombies symmetrically,
+		// cutting pair evaluations and distance calculations by 50% while preserving frame order.
+		for (let n = 0; n < this.zombies.length; n++) {
+			let r = this.zombies[n];
+			for (let e = n + 1; e < this.zombies.length; e++) {
 				let t = this.zombies[e], i = r.x - t.x, a = r.y - t.y;
 				let s = r.radius + t.radius;
 				let distSq = i * i + a * a;
 				if (distSq < s * s && distSq > 0) {
 					let o = Math.sqrt(distSq);
-					let e = (s - o) * .15;
-					r.x += i / o * e, r.y += a / o * e;
+					let disp = (s - o) * .15;
+					let dx = (i / o) * disp;
+					let dy = (a / o) * disp;
+					r.x += dx;
+					r.y += dy;
+					t.x -= dx;
+					t.y -= dy;
 				}
 			}
-			o <= r.radius + this.player.radius && this.invuln <= 0 && t - r.lastAttackTime >= r.attackCooldown && (this.lastKiller = r.type, this.damagePlayer(r.damage), r.lastAttackTime = t);
 		}
 	}
 	killZombie(e, t) {
@@ -1608,21 +1617,6 @@ export class GameEngine {
 			height: n
 		};
 		renderEnvironment(e, this.currentLocation, d, this.bloodDecals, this.firePuddles, this.drops, this.explosiveBarrels, this.loreNotes, this.barricades, this.extractActive), this.renderHoles(e), this.renderLantern(e), this.renderBell(e), this.renderZombies(e), this.renderPlayer(e), this.renderProjectiles(e), this.renderParticles(e);
-		for (let t of this.floaters) {
-			e.save();
-			e.globalAlpha = Math.max(0, t.life / t.maxLife);
-			const wild = t.color === "#e11d2e" || t.text === "HEAD" || /^\d+$/.test(t.text);
-			e.font = wild ? t.text === "HEAD" ? `20px Creepster, Nosifer, Impact, cursive` : `16px Creepster, Nosifer, Impact, cursive` : `bold 13px "IBM Plex Mono", monospace`;
-			e.textAlign = "center";
-			if (wild) {
-				e.strokeStyle = "#1a0404";
-				e.lineWidth = 3;
-				e.strokeText(t.text, t.x, t.y);
-			}
-			e.fillStyle = t.color;
-			e.fillText(t.text, t.x, t.y);
-			e.restore();
-		}
 		e.restore();
 		let f = {
 			x: t / 2,
@@ -1668,22 +1662,7 @@ export class GameEngine {
 			e.fillRect(0, 0, t, n);
 			e.restore();
 		}
-		e.save(), e.translate(-l, -u), this.renderNoisePulses(e), this.renderHoleMarkers(e), this.renderLantern(e), this.renderBell(e), this.renderZombieLabels(e);
-		for (let t of this.floaters) {
-			e.save();
-			e.globalAlpha = Math.max(0, t.life / t.maxLife);
-			const wild = t.color === "#e11d2e" || t.text === "HEAD" || /^\d+$/.test(t.text);
-			e.font = wild ? t.text === "HEAD" ? `20px Creepster, Nosifer, Impact, cursive` : `16px Creepster, Nosifer, Impact, cursive` : `bold 13px "IBM Plex Mono", monospace`;
-			e.textAlign = "center";
-			if (wild) {
-				e.strokeStyle = "#1a0404";
-				e.lineWidth = 3;
-				e.strokeText(t.text, t.x, t.y);
-			}
-			e.fillStyle = t.color;
-			e.fillText(t.text, t.x, t.y);
-			e.restore();
-		}
+		e.save(), e.translate(-l, -u), this.renderNoisePulses(e), this.renderHoleMarkers(e), this.renderLantern(e), this.renderBell(e), this.renderZombieLabels(e), this.renderFloaters(e);
 		if (e.restore(), this.interactHint) {
 			e.save();
 			let r = this.player.x - l, i = this.player.y - u - 70;
@@ -1901,6 +1880,23 @@ export class GameEngine {
 				e.fillStyle = "#e11d2e";
 				e.fillRect(-n / 2, -t.radius - 8 - limp, n * r, 4);
 			}
+			e.restore();
+		}
+	}
+	renderFloaters(e) {
+		for (let t of this.floaters) {
+			e.save();
+			e.globalAlpha = Math.max(0, t.life / t.maxLife);
+			const wild = t.color === "#e11d2e" || t.text === "HEAD" || /^\d+$/.test(t.text);
+			e.font = wild ? t.text === "HEAD" ? `20px Creepster, Nosifer, Impact, cursive` : `16px Creepster, Nosifer, Impact, cursive` : `bold 13px "IBM Plex Mono", monospace`;
+			e.textAlign = "center";
+			if (wild) {
+				e.strokeStyle = "#1a0404";
+				e.lineWidth = 3;
+				e.strokeText(t.text, t.x, t.y);
+			}
+			e.fillStyle = t.color;
+			e.fillText(t.text, t.x, t.y);
 			e.restore();
 		}
 	}
